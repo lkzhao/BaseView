@@ -1,0 +1,43 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "BaseToolbox",
+        "repositoryURL": "https://github.com/lkzhao/BaseToolbox",
+        "state": {
+          "branch": null,
+          "revision": "0d7795bbd88c5294f1cb259b45256261b32b6d81",
+          "version": "0.1.2"
+        }
+      },
+      {
+        "package": "Hero2",
+        "repositoryURL": "https://github.com/lkzhao/Hero2",
+        "state": {
+          "branch": null,
+          "revision": "eb8d0cdad4015d74a3064db3bc80eac7ba979465",
+          "version": "0.4.11"
+        }
+      },
+      {
+        "package": "ScreenCorners",
+        "repositoryURL": "https://github.com/kylebshr/ScreenCorners",
+        "state": {
+          "branch": null,
+          "revision": "1b71897c8d9091cad34bf10a47e3810c0c10e1e8",
+          "version": "1.0.1"
+        }
+      },
+      {
+        "package": "UIComponent",
+        "repositoryURL": "https://github.com/lkzhao/UIComponent",
+        "state": {
+          "branch": null,
+          "revision": "713c581481e995db2bbe86349d89d345377aef0e",
+          "version": "0.10.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
