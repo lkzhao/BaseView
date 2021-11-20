@@ -10,8 +10,6 @@ open class ComponentRootView: RootView {
     
     open override func viewDidLoad() {
         super.viewDidLoad()
-        overrideUserInterfaceStyle = .dark
-        backgroundColor = .systemBackground
         componentView.contentInsetAdjustmentBehavior = .always
         componentView.delaysContentTouches = false
         addSubview(componentView)
