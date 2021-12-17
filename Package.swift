@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "BaseView",
     platforms: [
-        .iOS(.v13),
+        .iOS("13.4"),
     ],
     products: [
         .library(
