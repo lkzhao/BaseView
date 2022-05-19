@@ -1,5 +1,6 @@
 import UIKit
 import UIComponent
+import Hero2
 
 open class ComponentRootView: RootView {
     public let componentView = ComponentScrollView()
@@ -18,7 +19,7 @@ open class ComponentRootView: RootView {
     
     open override func layoutSubviews() {
         super.layoutSubviews()
-        guard !transition.isTransitioning else { return }
+        guard !TransitionCoordinator.shared.isTransitioning else { return }
         componentView.frameWithoutTransform = bounds
     }
     
