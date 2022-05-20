@@ -19,7 +19,7 @@ open class ComponentRootView: RootView {
     
     open override func layoutSubviews() {
         super.layoutSubviews()
-        guard !TransitionCoordinator.shared.isTransitioning else { return }
+        guard !TransitionCoordinator.shared.isAnimating else { return }
         componentView.frameWithoutTransform = bounds
     }
     
