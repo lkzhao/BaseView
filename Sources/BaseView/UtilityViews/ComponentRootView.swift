@@ -5,8 +5,9 @@ import Hero2
 open class ComponentRootView: RootView {
     public let componentView = ComponentScrollView()
     
-    open var component: Component {
-        Space()
+    open var component: Component? {
+        get { componentView.component }
+        set { componentView.component = newValue }
     }
     
     open override func viewDidLoad() {
@@ -14,17 +15,12 @@ open class ComponentRootView: RootView {
         componentView.contentInsetAdjustmentBehavior = .always
         componentView.delaysContentTouches = false
         addSubview(componentView)
-        reloadComponent()
     }
     
     open override func layoutSubviews() {
         super.layoutSubviews()
         guard !isTransitionAnimating else { return }
         componentView.frameWithoutTransform = bounds
-    }
-    
-    open func reloadComponent() {
-        componentView.component = component
     }
     
     open override func sizeThatFits(_ size: CGSize) -> CGSize {
