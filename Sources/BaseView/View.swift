@@ -1,4 +1,5 @@
 import UIKit
+import Hero2
 
 // base view class that provide viewDidLoad callback so that subclass don't need to implement two init functions
 open class View: UIView {
@@ -60,5 +61,21 @@ private class ShadowingViewAction: NSObject, CAAction {
         animation.fromValue = self.priorPath
         animation.toValue = layer.shadowPath
         layer.add(animation, forKey: "shadowPath")
+    }
+}
+
+extension View {
+    public var isTransitionAnimating: Bool {
+        if TransitionCoordinator.shared.isAnimating {
+            return true
+        }
+        var parent = parentViewController
+        if let navVC = parent?.navigationController, (navVC.delegate as? TransitionStateProvider)?.isAnimating ?? false {
+            return true
+        }
+        while let parentOfParent = parent?.parent {
+            parent = parentOfParent
+        }
+        return (parent?.transitioningDelegate as? TransitionStateProvider)?.isAnimating ?? false
     }
 }
