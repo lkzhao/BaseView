@@ -15,7 +15,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/lkzhao/UIComponent", from: "0.10.1"),
-        .package(url: "https://github.com/lkzhao/Hero2", from: "0.5.5"),
+        .package(url: "https://github.com/lkzhao/Hero2", from: "0.6.2"),
     ],
     targets: [
         .target(

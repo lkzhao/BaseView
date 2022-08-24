@@ -63,19 +63,3 @@ private class ShadowingViewAction: NSObject, CAAction {
         layer.add(animation, forKey: "shadowPath")
     }
 }
-
-extension View {
-    public var isTransitionAnimating: Bool {
-        if TransitionCoordinator.shared.isAnimating {
-            return true
-        }
-        var parent = parentViewController
-        if let navVC = parent?.navigationController, (navVC.delegate as? TransitionStateProvider)?.isAnimating ?? false {
-            return true
-        }
-        while let parentOfParent = parent?.parent {
-            parent = parentOfParent
-        }
-        return (parent?.transitioningDelegate as? TransitionStateProvider)?.isAnimating ?? false
-    }
-}
