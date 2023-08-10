@@ -5,7 +5,7 @@ import Hero2
 open class ComponentRootView: RootView {
     public let componentView = ComponentScrollView()
     
-    open var component: Component? {
+    open var component: (any Component)? {
         get { componentView.component }
         set { componentView.component = newValue }
     }
