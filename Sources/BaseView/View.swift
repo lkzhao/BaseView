@@ -1,5 +1,4 @@
 import UIKit
-import Hero2
 
 // base view class that provide viewDidLoad callback so that subclass don't need to implement two init functions
 open class View: UIView {
