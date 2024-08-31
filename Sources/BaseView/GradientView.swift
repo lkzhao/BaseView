@@ -31,7 +31,22 @@ open class GradientView: View {
         get { return gradientLayer.endPoint }
         set { gradientLayer.endPoint = newValue }
     }
-    
+
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        if #available(iOS 17.0, *) {
+            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, previousTraitCollection) in
+                if view.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                    view.updateColors()
+                }
+            }
+        }
+    }
+
+    public required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     open override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         updateColors()

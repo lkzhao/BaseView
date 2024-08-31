@@ -6,26 +6,26 @@ open class ShapeView: View {
     public override class var layerClass: AnyClass {
         CAShapeLayer.self
     }
-    
+
     public var shapeLayer: CAShapeLayer {
         layer as! CAShapeLayer
     }
-    
+
     public var path: UIBezierPath? {
         didSet {
             shapeLayer.path = path?.cgPath
         }
     }
-    
+
     public var fillColor: UIColor? {
         didSet {
-            shapeLayer.fillColor = fillColor?.cgColor
+            shapeLayer.fillColor = fillColor?.resolvedColor(with: traitCollection).cgColor
         }
     }
-    
+
     public var strokeColor: UIColor? {
         didSet {
-            shapeLayer.strokeColor = strokeColor?.cgColor
+            shapeLayer.strokeColor = strokeColor?.resolvedColor(with: traitCollection).cgColor
         }
     }
 
@@ -56,11 +56,27 @@ open class ShapeView: View {
     @Proxy(\.shapeLayer.lineDashPattern)
     public var lineDashPattern: [NSNumber]?
 
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
+        if #available(iOS 17.0, *) {
+            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, previousTraitCollection) in
+                if view.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                    view.shapeLayer.fillColor = view.fillColor?.resolvedColor(with: view.traitCollection).cgColor
+                    view.shapeLayer.strokeColor = view.strokeColor?.resolvedColor(with: view.traitCollection).cgColor
+                }
+            }
+        }
+    }
+    
+    public required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     open override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         if traitCollection.userInterfaceStyle != previousTraitCollection?.userInterfaceStyle {
-            shapeLayer.fillColor = fillColor?.cgColor
-            shapeLayer.strokeColor = strokeColor?.cgColor
+            shapeLayer.fillColor = fillColor?.resolvedColor(with: traitCollection).cgColor
+            shapeLayer.strokeColor = strokeColor?.resolvedColor(with: traitCollection).cgColor
         }
     }
 }
