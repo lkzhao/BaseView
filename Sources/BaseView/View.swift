@@ -1,6 +1,7 @@
 import UIKit
 
-// base view class that provide viewDidLoad callback so that subclass don't need to implement two init functions
+// A base view class that provide viewDidLoad callback so that subclass don't need to implement two init functions
+// Also provides compatibility for pre-iOS 26 versions by using layoutSubviews as a fallback for updateProperties
 open class View: UIView {
     open var automaticallyCalculateShadowPath = true
     
@@ -13,12 +14,49 @@ open class View: UIView {
         super.init(coder: aDecoder)
         viewDidLoad()
     }
-    
+
+    // subclass override
     open func viewDidLoad() {
-        // subclass override
+        if #unavailable(iOS 26.0) {
+            setNeedsUpdateProperties()
+        }
     }
-    
+
+    open override func updateProperties() {
+        if #available(iOS 26.0, *) {
+            super.updateProperties()
+        }
+    }
+
+    open override func setNeedsUpdateProperties() {
+        if #available(iOS 26.0, *) {
+            super.setNeedsUpdateProperties()
+        } else {
+            _needsUpdateProperties = true
+            setNeedsLayout()
+        }
+    }
+
+    private var _isInPreLayout = false
+    private var _needsUpdateProperties = false
+
+    open override func setNeedsLayout() {
+        guard !_isInPreLayout else { return }
+        super.setNeedsLayout()
+    }
+
     open override func layoutSubviews() {
+        if #unavailable(iOS 26.0), _needsUpdateProperties {
+            _isInPreLayout = true
+            withObservationTracking {
+                updateProperties()
+            } onChange: { [weak self] in
+                MainActor.assumeIsolated {
+                    self?.setNeedsUpdateProperties()
+                }
+            }
+            _isInPreLayout = false
+        }
         super.layoutSubviews()
         if shadowOpacity > 0, automaticallyCalculateShadowPath {
             shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: cornerRadius)
