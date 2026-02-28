@@ -37,8 +37,27 @@ open class View: UIView {
         }
     }
 
+    open override func updatePropertiesIfNeeded() {
+        if #available(iOS 26.0, *) {
+            super.updatePropertiesIfNeeded()
+        } else if _needsUpdateProperties {
+            _updateProperties()
+        }
+    }
+
     private var _isInPreLayout = false
     private var _needsUpdateProperties = false
+
+    private func _updateProperties() {
+        withObservationTracking {
+            updateProperties()
+        } onChange: { [weak self] in
+            MainActor.assumeIsolated {
+                self?.setNeedsUpdateProperties()
+            }
+        }
+        _needsUpdateProperties = false
+    }
 
     open override func setNeedsLayout() {
         guard !_isInPreLayout else { return }
@@ -48,13 +67,7 @@ open class View: UIView {
     open override func layoutSubviews() {
         if #unavailable(iOS 26.0), _needsUpdateProperties {
             _isInPreLayout = true
-            withObservationTracking {
-                updateProperties()
-            } onChange: { [weak self] in
-                MainActor.assumeIsolated {
-                    self?.setNeedsUpdateProperties()
-                }
-            }
+            _updateProperties()
             _isInPreLayout = false
         }
         super.layoutSubviews()
