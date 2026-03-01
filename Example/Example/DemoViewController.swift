@@ -14,7 +14,7 @@ final class DemoViewController: UIViewController {
     }
 }
 
-private final class DemoRootView: View {
+private final class DemoRootView: BaseView {
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundColor = .systemBackground
@@ -24,7 +24,7 @@ private final class DemoRootView: View {
         super.updateProperties()
         componentEngine.component = VStack(spacing: 18, alignItems: .stretch) {
             DemoCard(
-                title: "View",
+                title: "BaseView",
                 detail: "Base class with viewDidLoad/updateProperties hooks and shadow-path support.",
                 preview: ViewComponent<BaseViewExampleView>()
                     .size(width: .fill, height: 84)
@@ -109,7 +109,7 @@ private struct DemoCard<Content: Component>: ComponentBuilder {
     }
 }
 
-private final class BaseViewExampleView: View {
+private final class BaseViewExampleView: BaseView {
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundColor = UIColor.systemBlue.withAlphaComponent(0.18)

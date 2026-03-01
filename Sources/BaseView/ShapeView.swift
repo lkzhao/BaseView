@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 import BaseToolbox
 
-open class ShapeView: View {
+open class ShapeView: BaseView {
     public override class var layerClass: AnyClass {
         CAShapeLayer.self
     }

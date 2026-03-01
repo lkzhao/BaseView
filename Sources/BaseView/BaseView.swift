@@ -1,8 +1,8 @@
 import UIKit
 
-// A base view class that provide viewDidLoad callback so that subclass don't need to implement two init functions
+// A base view class that provides viewDidLoad callback so subclasses don't need to implement two init functions
 // Also provides compatibility for pre-iOS 26 versions by using layoutSubviews as a fallback for updateProperties
-open class View: UIView {
+open class BaseView: UIView {
     open var automaticallyCalculateShadowPath = true
     
     public override init(frame: CGRect) {

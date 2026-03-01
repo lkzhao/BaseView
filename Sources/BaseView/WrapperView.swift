@@ -1,7 +1,7 @@
 import UIKit
 import BaseToolbox
 
-open class WrapperView<V: UIView>: View {
+open class WrapperView<V: UIView>: BaseView {
     open var contentView: V
 
     public var inset: UIEdgeInsets = .zero {

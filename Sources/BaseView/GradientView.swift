@@ -1,6 +1,6 @@
 import UIKit
 
-open class GradientView: View {
+open class GradientView: BaseView {
     open override class var layerClass: AnyClass {
         return CAGradientLayer.self
     }
