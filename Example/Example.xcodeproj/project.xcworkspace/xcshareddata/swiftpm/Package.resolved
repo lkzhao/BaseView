@@ -1,5 +1,5 @@
 {
-  "originHash" : "8cbb8f8397e4c69ff84d9513e2c73138507a429794356e73d0b613a04c1ce839",
+  "originHash" : "dcc32e68d878b12b483f4d6b1bcc4115f8a09e6c118155230af9e70190ad2e9b",
   "pins" : [
     {
       "identity" : "basetoolbox",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "35e0d889ee2d8bf7bbc6169283efb330609d9638",
         "version" : "0.7.1"
+      }
+    },
+    {
+      "identity" : "motion",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/b3ll/Motion",
+      "state" : {
+        "revision" : "d0439dd8f31ef16c3e17ef12e8d1921b00341d67",
+        "version" : "0.1.5"
       }
     },
     {

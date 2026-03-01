@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		B152CFB82F54D9FB00497663 /* BaseView in Frameworks */ = {isa = PBXBuildFile; productRef = B152CFB72F54D9FB00497663 /* BaseView */; };
 		B152CFBB2F54DA0E00497663 /* UIComponent in Frameworks */ = {isa = PBXBuildFile; productRef = B152CFBA2F54DA0E00497663 /* UIComponent */; };
+		B152CFBC2F54DA1300497663 /* Motion in Frameworks */ = {isa = PBXBuildFile; productRef = B152CFBE2F54DA1300497663 /* Motion */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B152CFBC2F54DA1300497663 /* Motion in Frameworks */,
 				B152CFBB2F54DA0E00497663 /* UIComponent in Frameworks */,
 				B152CFB82F54D9FB00497663 /* BaseView in Frameworks */,
 			);
@@ -87,6 +89,7 @@
 			packageProductDependencies = (
 				B152CFB72F54D9FB00497663 /* BaseView */,
 				B152CFBA2F54DA0E00497663 /* UIComponent */,
+				B152CFBE2F54DA1300497663 /* Motion */,
 			);
 			productName = Example;
 			productReference = B152CF992F54D97000497663 /* Example.app */;
@@ -119,6 +122,7 @@
 			packageReferences = (
 				B152CFB62F54D9FB00497663 /* XCLocalSwiftPackageReference "../../BaseView" */,
 				B152CFB92F54DA0E00497663 /* XCLocalSwiftPackageReference "../../UIComponent" */,
+				B152CFBD2F54DA1300497663 /* XCRemoteSwiftPackageReference "Motion" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B152CF9A2F54D97000497663 /* Products */;
@@ -357,6 +361,17 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		B152CFBD2F54DA1300497663 /* XCRemoteSwiftPackageReference "Motion" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/b3ll/Motion";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.5;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCLocalSwiftPackageReference section */
 		B152CFB62F54D9FB00497663 /* XCLocalSwiftPackageReference "../../BaseView" */ = {
 			isa = XCLocalSwiftPackageReference;
@@ -376,6 +391,11 @@
 		B152CFBA2F54DA0E00497663 /* UIComponent */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = UIComponent;
+		};
+		B152CFBE2F54DA1300497663 /* Motion */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B152CFBD2F54DA1300497663 /* XCRemoteSwiftPackageReference "Motion" */;
+			productName = Motion;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -2,6 +2,7 @@ import UIKit
 import BaseView
 import UIComponent
 import BaseToolbox
+import Motion
 
 final class DemoViewController: UIViewController {
     override func loadView() {
@@ -86,6 +87,13 @@ private final class DemoRootView: BaseView {
                 detail: "Adjust effect intensity and pick different blur styles.",
                 preview: ViewComponent<VisualEffectIntensityDemoView>()
                     .size(width: .fill, height: 380)
+            )
+
+            DemoCard(
+                title: "PortalPairView",
+                detail: "Tap to spring-animate progress and frame interpolation between two label anchors.",
+                preview: ViewComponent<PortalPairDemoView>()
+                    .size(width: .fill, height: 170)
             )
 
             DemoCard(
@@ -375,6 +383,91 @@ private final class EffectPicker: UIView, UIPickerViewDataSource, UIPickerViewDe
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         selectedIndex = row
         onSelectionChanged?(row)
+    }
+}
+
+private final class PortalPairDemoView: BaseView {
+    private let topLeftLabel = UIView().then {
+        $0.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.2)
+        $0.cornerRadius = 8
+        $0.componentEngine.component = Text("Top Left", font: .systemFont(ofSize: 14, weight: .semibold))
+            .inset(h: 12, v: 8)
+    }
+    private let bottomRightLabel = UIView().then {
+        $0.backgroundColor = UIColor.systemPink.withAlphaComponent(0.22)
+        $0.cornerRadius = 8
+        $0.componentEngine.component = Text("Bottom Right", font: .systemFont(ofSize: 14, weight: .semibold))
+            .inset(h: 12, v: 8)
+    }
+
+    private lazy var portalPairView: PortalPairView = PortalPairView(backgroundView: topLeftLabel, foregroundView: bottomRightLabel)
+
+    private let progressAnimation = SpringAnimation<CGFloat>(initialValue: 0)
+
+    private var progress: CGFloat = 0 {
+        didSet {
+            applyProgress()
+        }
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        backgroundColor = UIColor.secondarySystemBackground
+        cornerRadius = 12
+        clipsToBounds = true
+
+        addSubview(portalPairView)
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+        addGestureRecognizer(tapGesture)
+
+        progressAnimation.configure(response: 0.5, dampingRatio: 0.8)
+        progressAnimation.onValueChanged(disableActions: true) { [weak self] value in
+            self?.progress = value
+        }
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+        componentEngine.component = ZStack {
+            ZStack(verticalAlignment: .start, horizontalAlignment: .start) {
+                topLeftLabel
+            }.fill()
+            ZStack(verticalAlignment: .end, horizontalAlignment: .end) {
+                bottomRightLabel
+            }.fill()
+        }.inset(12)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        applyProgress()
+    }
+
+    @objc private func handleTap() {
+        progressAnimation.toValue = progress < 0.5 ? 1 : 0
+        progressAnimation.start()
+    }
+
+    private func applyProgress() {
+        portalPairView.progress = progress
+        portalPairView.frameWithoutTransform = interpolatedFrame(progress: progress)
+    }
+
+    private func interpolatedFrame(progress: CGFloat) -> CGRect {
+        let fromFrame = topLeftLabel.frameWithoutTransform
+        let toFrame = bottomRightLabel.frameWithoutTransform
+        return CGRect(
+            x: interpolate(from: fromFrame.minX, to: toFrame.minX, progress: progress),
+            y: interpolate(from: fromFrame.minY, to: toFrame.minY, progress: progress),
+            width: interpolate(from: fromFrame.width, to: toFrame.width, progress: progress),
+            height: interpolate(from: fromFrame.height, to: toFrame.height, progress: progress)
+        )
+    }
+
+    private func interpolate(from: CGFloat, to: CGFloat, progress: CGFloat) -> CGFloat {
+        from + (to - from) * progress
     }
 }
 

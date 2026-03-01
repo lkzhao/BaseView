@@ -151,6 +151,7 @@ open class PortalPairView: UIView {
             return
         }
 
+        portalView.bounds.size = sourceSize
         portalView.transform = .identity.scaledBy(
             x: bounds.width / sourceSize.width,
             y: bounds.height / sourceSize.height
