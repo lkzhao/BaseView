@@ -35,6 +35,13 @@ open class VisualEffectView: UIVisualEffectView {
 
     private func commonInit(with effect: UIVisualEffect?) {
         setTargetEffect(effect)
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, previousTraitCollection) in
+            if view.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                if let targetEffect = view.targetEffect {
+                    view.setTargetEffect(targetEffect)
+                }
+            }
+        }
     }
 
     private func setTargetEffect(_ effect: UIVisualEffect?) {

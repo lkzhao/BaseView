@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "basetoolbox",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lkzhao/BaseToolbox",
+      "state" : {
+        "revision" : "35e0d889ee2d8bf7bbc6169283efb330609d9638",
+        "version" : "0.7.1"
+      }
+    }
+  ],
+  "version" : 2
+}
