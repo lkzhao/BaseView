@@ -82,6 +82,13 @@ private final class DemoRootView: BaseView {
             )
 
             DemoCard(
+                title: "VisualEffectView",
+                detail: "Adjust effect intensity and pick different blur styles.",
+                preview: ViewComponent<VisualEffectIntensityDemoView>()
+                    .size(width: .fill, height: 380)
+            )
+
+            DemoCard(
                 title: "ShapeView",
                 detail: "CAShapeLayer-backed vector view with stroke and fill controls.",
                 preview: ViewComponent<BadgeShapeDemoView>()
@@ -138,6 +145,236 @@ private final class LabelWrapperDemoView: WrapperView<UILabel> {
         contentView.textAlignment = .center
         contentView.numberOfLines = 0
         contentView.font = .systemFont(ofSize: 14, weight: .medium)
+    }
+}
+
+private final class VisualEffectIntensityDemoView: BaseView {
+    private struct EffectOption {
+        let title: String
+        let effect: UIVisualEffect?
+    }
+
+    private let effectOptions: [EffectOption] = [
+        EffectOption(title: "Material", effect: UIBlurEffect(style: .systemMaterial)),
+        EffectOption(title: "Thin", effect: UIBlurEffect(style: .systemThinMaterial)),
+        EffectOption(title: "Thick", effect: UIBlurEffect(style: .systemThickMaterial)),
+        EffectOption(title: "Chrome", effect: UIBlurEffect(style: .systemChromeMaterial)),
+        EffectOption(title: "Ultra Thin", effect: UIBlurEffect(style: .systemUltraThinMaterial)),
+        EffectOption(title: "Regular Glass", effect: UIGlassEffect(style: .regular)),
+        EffectOption(title: "Clear Glass", effect: UIGlassEffect(style: .clear)),
+    ]
+
+    private var intensity: CGFloat = 0.6 {
+        didSet {
+            guard intensity != oldValue else { return }
+            setNeedsUpdateProperties()
+        }
+    }
+
+    private var selectedEffectIndex: Int = 0 {
+        didSet {
+            guard selectedEffectIndex != oldValue else { return }
+            setNeedsUpdateProperties()
+        }
+    }
+
+    private var selectedEffect: UIVisualEffect? {
+        effectOptions[selectedEffectIndex].effect
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        backgroundColor = UIColor.secondarySystemBackground
+        cornerRadius = 12
+        clipsToBounds = true
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+        componentEngine.component = VStack(spacing: 8, alignItems: .stretch) {
+            ViewComponent<VisualEffectBackdropView>()
+                .intensity(intensity)
+                .visualEffect(selectedEffect)
+                .size(width: .fill, height: 140)
+
+            Text("Intensity: \(String(format: "%.2f", intensity))", font: .systemFont(ofSize: 13, weight: .semibold))
+                .textColor(.label)
+
+            ViewComponent<IntensitySlider>()
+                .minimumValue(0)
+                .maximumValue(1)
+                .value(intensity)
+                .onValueChanged { [weak self] value in
+                    self?.intensity = value
+                }
+                .size(width: .fill, height: 28)
+
+            Text("Effect: \(effectOptions[selectedEffectIndex].title)", font: .systemFont(ofSize: 13, weight: .semibold))
+                .textColor(.label)
+
+            ViewComponent<EffectPicker>()
+                .titles(effectOptions.map(\.title))
+                .selectedIndex(selectedEffectIndex)
+                .onSelectionChanged { [weak self] index in
+                    self?.selectedEffectIndex = index
+                }
+                .fill()
+                .flex()
+        }
+        .inset(12)
+        .fill()
+    }
+}
+
+private final class VisualEffectBackdropView: BaseView {
+    var intensity: CGFloat = 0.6 {
+        didSet {
+            guard intensity != oldValue else { return }
+            setNeedsUpdateProperties()
+        }
+    }
+
+    var visualEffect: UIVisualEffect? = UIBlurEffect(style: .systemMaterial) {
+        didSet {
+            setNeedsUpdateProperties()
+        }
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        backgroundColor = UIColor(red: 0.18, green: 0.22, blue: 0.42, alpha: 1.0)
+        cornerRadius = 10
+        clipsToBounds = true
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+        componentEngine.component = ZStack {
+            Space(width: 110, height: 110)
+                .backgroundColor(UIColor(red: 0.98, green: 0.55, blue: 0.35, alpha: 0.9))
+                .roundedCorner()
+                .offset(x: -26, y: -14)
+
+            Space(width: 95, height: 95)
+                .backgroundColor(UIColor(red: 0.22, green: 0.84, blue: 0.76, alpha: 0.86))
+                .roundedCorner()
+                .offset(x: 36, y: 18)
+
+            Space(width: 120, height: 120)
+                .backgroundColor(UIColor(red: 0.35, green: 0.50, blue: 0.98, alpha: 0.88))
+                .roundedCorner()
+                .offset(x: 110, y: -24)
+
+            Text("Blur Sample", font: .boldSystemFont(ofSize: 20))
+                .textColor(UIColor.white.withAlphaComponent(0.95))
+
+            ViewComponent<VisualEffectView>()
+                .effect(visualEffect)
+                .effectIntensity(intensity)
+                .size(width: .fill, height: .fill)
+                .cornerRadius(20)
+                .inset(20)
+        }
+        .fill()
+    }
+}
+
+private final class IntensitySlider: UIView {
+    private let slider = UISlider()
+    var onValueChanged: ((CGFloat) -> Void)?
+
+    var minimumValue: CGFloat = 0 {
+        didSet {
+            slider.minimumValue = Float(minimumValue)
+        }
+    }
+
+    var maximumValue: CGFloat = 1 {
+        didSet {
+            slider.maximumValue = Float(maximumValue)
+        }
+    }
+
+    var value: CGFloat = 0 {
+        didSet {
+            guard !slider.isTracking else { return }
+            slider.value = Float(value)
+        }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        slider.addTarget(self, action: #selector(valueChanged), for: .valueChanged)
+        componentEngine.component = slider.fill()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    @objc private func valueChanged() {
+        value = CGFloat(slider.value)
+        onValueChanged?(value)
+    }
+}
+
+private final class EffectPicker: UIView, UIPickerViewDataSource, UIPickerViewDelegate {
+    private let pickerView = UIPickerView()
+
+    var titles: [String] = [] {
+        didSet {
+            pickerView.reloadAllComponents()
+            applySelectionIfNeeded()
+        }
+    }
+
+    var selectedIndex: Int = 0 {
+        didSet {
+            applySelectionIfNeeded()
+        }
+    }
+
+    var onSelectionChanged: ((Int) -> Void)?
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        pickerView.dataSource = self
+        pickerView.delegate = self
+        componentEngine.component = pickerView.fill()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func applySelectionIfNeeded() {
+        guard !titles.isEmpty else { return }
+        let clamped = min(max(selectedIndex, 0), titles.count - 1)
+        if clamped != selectedIndex {
+            selectedIndex = clamped
+            return
+        }
+        if pickerView.selectedRow(inComponent: 0) != clamped {
+            pickerView.selectRow(clamped, inComponent: 0, animated: false)
+        }
+    }
+
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        1
+    }
+
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        titles.count
+    }
+
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        titles[row]
+    }
+
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        selectedIndex = row
+        onSelectionChanged?(row)
     }
 }
 
