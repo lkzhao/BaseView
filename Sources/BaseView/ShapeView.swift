@@ -19,13 +19,15 @@ open class ShapeView: BaseView {
 
     public var fillColor: UIColor? {
         didSet {
-            shapeLayer.fillColor = fillColor?.resolvedColor(with: traitCollection).cgColor
+            guard fillColor != oldValue else { return }
+            setNeedsUpdateProperties()
         }
     }
 
     public var strokeColor: UIColor? {
         didSet {
-            shapeLayer.strokeColor = strokeColor?.resolvedColor(with: traitCollection).cgColor
+            guard strokeColor != oldValue else { return }
+            setNeedsUpdateProperties()
         }
     }
 
@@ -58,12 +60,9 @@ open class ShapeView: BaseView {
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        if #available(iOS 17.0, *) {
-            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, previousTraitCollection) in
-                if view.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-                    view.shapeLayer.fillColor = view.fillColor?.resolvedColor(with: view.traitCollection).cgColor
-                    view.shapeLayer.strokeColor = view.strokeColor?.resolvedColor(with: view.traitCollection).cgColor
-                }
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, previousTraitCollection) in
+            if view.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                view.setNeedsUpdateProperties()
             }
         }
     }
@@ -71,12 +70,10 @@ open class ShapeView: BaseView {
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    open override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.userInterfaceStyle != previousTraitCollection?.userInterfaceStyle {
-            shapeLayer.fillColor = fillColor?.resolvedColor(with: traitCollection).cgColor
-            shapeLayer.strokeColor = strokeColor?.resolvedColor(with: traitCollection).cgColor
-        }
+
+    open override func updateProperties() {
+        super.updateProperties()
+        shapeLayer.fillColor = fillColor?.resolvedColor(with: traitCollection).cgColor
+        shapeLayer.strokeColor = strokeColor?.resolvedColor(with: traitCollection).cgColor
     }
 }

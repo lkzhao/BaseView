@@ -1,23 +1,57 @@
 import UIKit
+import BaseToolbox
 
 open class ShimmerLabel: ShimmerView {
     private let label = UILabel()
-    open var text: String {
-        get { label.text ?? "" }
-        set { label.text = newValue }
-    }
-    open var font: UIFont {
-        get { label.font }
-        set { label.font = newValue }
-    }
-    open var textAlignment: NSTextAlignment {
-        get { label.textAlignment }
-        set { label.textAlignment = newValue }
-    }
-    open var adjustsFontSizeToFitWidth: Bool {
-        get { label.adjustsFontSizeToFitWidth }
-        set { label.adjustsFontSizeToFitWidth = newValue }
-    }
+
+    @Proxy(\.label.text)
+    open var text: String?
+
+    @Proxy(\.label.attributedText)
+    open var attributedText: NSAttributedString?
+
+    @Proxy(\.label.font)
+    open var font: UIFont
+
+    @Proxy(\.label.textColor)
+    open var textColor: UIColor
+
+    @Proxy(\.label.highlightedTextColor)
+    open var highlightedTextColor: UIColor?
+
+    @Proxy(\.label.isHighlighted)
+    open var isHighlighted: Bool
+
+    @Proxy(\.label.isEnabled)
+    open var isEnabled: Bool
+
+    @Proxy(\.label.textAlignment)
+    open var textAlignment: NSTextAlignment
+
+    @Proxy(\.label.numberOfLines)
+    open var numberOfLines: Int
+
+    @Proxy(\.label.lineBreakMode)
+    open var lineBreakMode: NSLineBreakMode
+
+    @Proxy(\.label.adjustsFontSizeToFitWidth)
+    open var adjustsFontSizeToFitWidth: Bool
+
+    @Proxy(\.label.minimumScaleFactor)
+    open var minimumScaleFactor: CGFloat
+
+    @Proxy(\.label.baselineAdjustment)
+    open var baselineAdjustment: UIBaselineAdjustment
+
+    @Proxy(\.label.allowsDefaultTighteningForTruncation)
+    open var allowsDefaultTighteningForTruncation: Bool
+
+    @Proxy(\.label.adjustsFontForContentSizeCategory)
+    open var adjustsFontForContentSizeCategory: Bool
+
+    @Proxy(\.label.preferredMaxLayoutWidth)
+    open var preferredMaxLayoutWidth: CGFloat
+
     open override func viewDidLoad() {
         super.viewDidLoad()
         mask = label

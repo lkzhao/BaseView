@@ -3,16 +3,19 @@ import UIKit
 open class ShimmerView: GradientView {
     open var shimmerColor: UIColor = UIColor(white: 0.1, alpha: 1) {
         didSet {
+            guard shimmerColor != oldValue else { return }
             colors = [baseColor, shimmerColor, baseColor]
         }
     }
     open var baseColor = UIColor.black {
         didSet {
+            guard baseColor != oldValue else { return }
             colors = [baseColor, shimmerColor, baseColor]
         }
     }
     open var shimmerDuration: TimeInterval = 1.5 {
         didSet {
+            guard shimmerDuration != oldValue else { return }
             updateAnimation()
         }
     }
@@ -29,10 +32,11 @@ open class ShimmerView: GradientView {
         super.didMoveToWindow()
         updateAnimation()
     }
-    func updateAnimation() {
-        if window != nil {
-            updatePropertiesIfNeeded()
 
+    func updateAnimation() {
+        updatePropertiesIfNeeded()
+
+        if window != nil {
             let baseLocations: [CGFloat]
             if let currentLocations = gradientLayer.locations?.map({ CGFloat(truncating: $0) }),
                !currentLocations.isEmpty {

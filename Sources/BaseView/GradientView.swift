@@ -32,15 +32,11 @@ open class GradientView: BaseView {
         }
     }
 
-    open var startPoint: CGPoint {
-        get { return gradientLayer.startPoint }
-        set { gradientLayer.startPoint = newValue }
-    }
+    @Proxy(\.gradientLayer.startPoint)
+    open var startPoint: CGPoint
     
-    open var endPoint: CGPoint {
-        get { return gradientLayer.endPoint }
-        set { gradientLayer.endPoint = newValue }
-    }
+    @Proxy(\.gradientLayer.endPoint)
+    open var endPoint: CGPoint
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
@@ -57,10 +53,6 @@ open class GradientView: BaseView {
 
     open override func updateProperties() {
         super.updateProperties()
-        updateColors()
-    }
-
-    private func updateColors() {
         let resolvedColors = colors.map {
             $0.resolvedColor(with: traitCollection)
         }
