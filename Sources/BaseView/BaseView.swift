@@ -1,21 +1,20 @@
 import UIKit
 
-// A base view class that provides viewDidLoad callback so subclasses don't need to implement two init functions
-// Also provides compatibility for pre-iOS 26 versions by using layoutSubviews as a fallback for updateProperties
+/// Base `UIView` subclass with a `viewDidLoad` hook and compatibility fallbacks for property updates.
 open class BaseView: UIView {
     open var automaticallyCalculateShadowPath = true
-    
+
     public override init(frame: CGRect) {
         super.init(frame: frame)
         viewDidLoad()
     }
-    
+
     public required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         viewDidLoad()
     }
 
-    // subclass override
+    /// Subclasses override this for one-time setup after initialization.
     open func viewDidLoad() {
         if #unavailable(iOS 26.0) {
             setNeedsUpdateProperties()
@@ -75,20 +74,20 @@ open class BaseView: UIView {
             shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: cornerRadius)
         }
     }
-    
+
     open override func action(for layer: CALayer, forKey event: String) -> CAAction? {
         guard shadowOpacity > 0, automaticallyCalculateShadowPath, event == "shadowPath" else {
             return super.action(for: layer, forKey: event)
         }
-        
+
         guard let priorPath = layer.presentation()?.shadowPath ?? layer.shadowPath else {
             return super.action(for: layer, forKey: event)
         }
-        
+
         guard let sizeAnimation = layer.animation(forKey: "bounds.size") as? CABasicAnimation else {
             return super.action(for: layer, forKey: event)
         }
-        
+
         let animation = sizeAnimation.copy() as! CABasicAnimation
         animation.keyPath = "shadowPath"
         let action = ShadowingViewAction()
@@ -101,13 +100,13 @@ open class BaseView: UIView {
 private class ShadowingViewAction: NSObject, CAAction {
     var pendingAnimation: CABasicAnimation? = nil
     var priorPath: CGPath? = nil
-    
+
     // CAAction Protocol
     func run(forKey event: String, object anObject: Any, arguments dict: [AnyHashable: Any]?) {
         guard let layer = anObject as? CALayer, let animation = self.pendingAnimation else {
             return
         }
-        
+
         animation.fromValue = self.priorPath
         animation.toValue = layer.shadowPath
         layer.add(animation, forKey: "shadowPath")

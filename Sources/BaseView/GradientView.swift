@@ -1,17 +1,18 @@
 import UIKit
 import BaseToolbox
 
+/// Gradient-backed view with optional per-interval easing between adjacent color stops.
 open class GradientView: BaseView {
     private static let easedIntervalInsertedPointCount = 12
 
     open override class var layerClass: AnyClass {
-        return CAGradientLayer.self
+        CAGradientLayer.self
     }
-    
+
     open var gradientLayer: CAGradientLayer {
-        return layer as! CAGradientLayer
+        layer as! CAGradientLayer
     }
-    
+
     open var colors: [UIColor] = [] {
         didSet {
             guard colors != oldValue else { return }
@@ -34,7 +35,7 @@ open class GradientView: BaseView {
 
     @Proxy(\.gradientLayer.startPoint)
     open var startPoint: CGPoint
-    
+
     @Proxy(\.gradientLayer.endPoint)
     open var endPoint: CGPoint
 
@@ -53,9 +54,7 @@ open class GradientView: BaseView {
 
     open override func updateProperties() {
         super.updateProperties()
-        let resolvedColors = colors.map {
-            $0.resolvedColor(with: traitCollection)
-        }
+        let resolvedColors = colors.map { $0.resolvedColor(with: traitCollection) }
         guard resolvedColors.count > 1, resolvedColors.count == locations.count else {
             gradientLayer.colors = resolvedColors.map(\.cgColor)
             gradientLayer.locations = locations.map { NSNumber(value: Double($0)) }

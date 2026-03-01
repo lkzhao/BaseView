@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import BaseToolbox
 
+/// Shape-backed view that exposes common `CAShapeLayer` properties through view APIs.
 open class ShapeView: BaseView {
     public override class var layerClass: AnyClass {
         CAShapeLayer.self
@@ -66,7 +67,7 @@ open class ShapeView: BaseView {
             }
         }
     }
-    
+
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

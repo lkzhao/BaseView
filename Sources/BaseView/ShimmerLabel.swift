@@ -1,6 +1,7 @@
 import UIKit
 import BaseToolbox
 
+/// Shimmering text view that masks `ShimmerView` with an internal `UILabel`.
 open class ShimmerLabel: ShimmerView {
     private let label = UILabel()
 
@@ -56,10 +57,12 @@ open class ShimmerLabel: ShimmerView {
         super.viewDidLoad()
         mask = label
     }
+
     open override func layoutSubviews() {
         super.layoutSubviews()
         label.frame = bounds
     }
+
     open override func sizeThatFits(_ size: CGSize) -> CGSize {
         label.sizeThatFits(size)
     }

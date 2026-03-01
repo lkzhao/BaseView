@@ -1,5 +1,6 @@
 import UIKit
 
+/// Animated gradient view that moves light bands across a base color to create a shimmer effect.
 open class ShimmerView: GradientView {
     open var shimmerColor: UIColor = UIColor(white: 0.1, alpha: 1) {
         didSet {
@@ -7,18 +8,21 @@ open class ShimmerView: GradientView {
             colors = [baseColor, shimmerColor, baseColor]
         }
     }
-    open var baseColor = UIColor.black {
+
+    open var baseColor: UIColor = .black {
         didSet {
             guard baseColor != oldValue else { return }
             colors = [baseColor, shimmerColor, baseColor]
         }
     }
+
     open var shimmerDuration: TimeInterval = 1.5 {
         didSet {
             guard shimmerDuration != oldValue else { return }
             updateAnimation()
         }
     }
+
     open override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -28,6 +32,7 @@ open class ShimmerView: GradientView {
         locations = [0.0, 0.5, 1.0]
         easeFunctions = [.easeInOut, .easeInOut]
     }
+
     open override func didMoveToWindow() {
         super.didMoveToWindow()
         updateAnimation()
