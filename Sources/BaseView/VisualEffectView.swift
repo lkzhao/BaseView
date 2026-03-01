@@ -2,6 +2,8 @@ import UIKit
 
 /// `UIVisualEffectView` variant with animatable effect intensity control.
 open class VisualEffectView: UIVisualEffectView {
+    private static let minimumVisibleEffectIntensity: CGFloat = 0.005
+
     private var targetEffect: UIVisualEffect?
     private var effectAnimator: UIViewPropertyAnimator?
     private var internalEffectIntensity: CGFloat = 1
@@ -69,7 +71,18 @@ open class VisualEffectView: UIVisualEffectView {
     }
 
     private func updateEffectFraction() {
-        effectAnimator?.fractionComplete = internalEffectIntensity
+        guard let animator = effectAnimator else {
+            setUnderlyingEffect(nil)
+            return
+        }
+
+        if internalEffectIntensity < Self.minimumVisibleEffectIntensity {
+            animator.fractionComplete = 0
+            setUnderlyingEffect(nil)
+            return
+        }
+
+        animator.fractionComplete = internalEffectIntensity
     }
 
     private func setUnderlyingEffect(_ effect: UIVisualEffect?) {
