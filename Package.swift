@@ -15,10 +15,11 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/lkzhao/BaseToolbox", from: "0.4.1"),
+        .package(url: "https://github.com/p-x9/ObfuscateMacro.git", from: "0.14.0"),
     ],
     targets: [
         .target(
             name: "BaseView",
-            dependencies: ["BaseToolbox"])
+            dependencies: ["BaseToolbox", "ObfuscateMacro"])
     ]
 )
