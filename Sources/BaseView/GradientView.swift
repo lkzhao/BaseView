@@ -1,6 +1,9 @@
 import UIKit
+import BaseToolbox
 
 open class GradientView: BaseView {
+    private static let easedIntervalInsertedPointCount = 12
+
     open override class var layerClass: AnyClass {
         return CAGradientLayer.self
     }
@@ -12,16 +15,23 @@ open class GradientView: BaseView {
     open var colors: [UIColor] = [] {
         didSet {
             guard colors != oldValue else { return }
-            updateColors()
+            setNeedsUpdateProperties()
         }
     }
-    
+
     open var locations: [CGFloat] = [] {
         didSet {
-            gradientLayer.locations = locations as [NSNumber]
+            guard locations != oldValue else { return }
+            setNeedsUpdateProperties()
         }
     }
-    
+
+    open var easeFunctions: [EaseFunction] = [] {
+        didSet {
+            setNeedsUpdateProperties()
+        }
+    }
+
     open var startPoint: CGPoint {
         get { return gradientLayer.startPoint }
         set { gradientLayer.startPoint = newValue }
@@ -34,11 +44,9 @@ open class GradientView: BaseView {
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        if #available(iOS 17.0, *) {
-            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, previousTraitCollection) in
-                if view.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-                    view.updateColors()
-                }
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: Self, previousTraitCollection) in
+            if view.traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+                view.setNeedsUpdateProperties()
             }
         }
     }
@@ -47,14 +55,57 @@ open class GradientView: BaseView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    open override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
+    open override func updateProperties() {
+        super.updateProperties()
         updateColors()
     }
-    
+
     private func updateColors() {
-        gradientLayer.colors = colors.map {
-            $0.resolvedColor(with: traitCollection).cgColor
+        let resolvedColors = colors.map {
+            $0.resolvedColor(with: traitCollection)
         }
+        guard resolvedColors.count > 1, resolvedColors.count == locations.count else {
+            gradientLayer.colors = resolvedColors.map(\.cgColor)
+            gradientLayer.locations = locations.map { NSNumber(value: Double($0)) }
+            return
+        }
+
+        let mappedStops = createMappedStops(colors: resolvedColors, locations: locations)
+
+        gradientLayer.colors = mappedStops.colors.map(\.cgColor)
+        gradientLayer.locations = mappedStops.locations.map { NSNumber(value: Double($0)) }
+    }
+
+    private func createMappedStops(colors: [UIColor], locations: [CGFloat]) -> (colors: [UIColor], locations: [CGFloat]) {
+        guard colors.count > 1 else {
+            return (colors, locations)
+        }
+
+        var mappedColors: [UIColor] = [colors[0]]
+        var mappedLocations: [CGFloat] = [locations[0]]
+
+        for intervalIndex in 0..<(colors.count - 1) {
+            let startColor = colors[intervalIndex]
+            let endColor = colors[intervalIndex + 1]
+            let startLocation = locations[intervalIndex]
+            let endLocation = locations[intervalIndex + 1]
+
+            if intervalIndex < easeFunctions.count {
+                let easeFunction = easeFunctions[intervalIndex]
+                if !easeFunction.isLinear {
+                    for step in 1...Self.easedIntervalInsertedPointCount {
+                        let linearT = CGFloat(step) / CGFloat(Self.easedIntervalInsertedPointCount + 1)
+                        let easedT = easeFunction.value(at: linearT).clamp(0, 1)
+                        mappedColors.append(.interpolated(from: startColor, to: endColor, progress: easedT))
+                        mappedLocations.append(lerp(from: startLocation, to: endLocation, progress: linearT))
+                    }
+                }
+            }
+
+            mappedColors.append(endColor)
+            mappedLocations.append(endLocation)
+        }
+
+        return (mappedColors, mappedLocations)
     }
 }
