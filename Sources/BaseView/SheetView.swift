@@ -19,10 +19,13 @@ open class SheetView: BaseView {
     var onDismiss: (() -> Void)?
 
     let springAnim = SpringAnimation<CGFloat>()
-    let scrollView = SheetScrollView()
 
     public var detents: [Detent] = [.medium(), .large()]
     let grabberView = UIView()
+
+    public var contentView: UIView {
+        glassView.contentView
+    }
 
     private let grabberSize = CGSize(width: 40, height: 6)
     private let grabberTopInset: CGFloat = 5
@@ -32,6 +35,13 @@ open class SheetView: BaseView {
     private var lastLayoutNotificationBounds = CGRect.null
     private var lastLayoutNotificationSafeAreaInsets = UIEdgeInsets.zero
     private var isNotifyingSheetDidMove = false
+    private weak var trackedScrollView: UIScrollView? {
+        didSet {
+            guard oldValue !== trackedScrollView else { return }
+            oldValue?.lockedToTop = false
+            trackedScrollView?.lockedToTop = isDraggingSheet
+        }
+    }
 
     public struct Detent: Equatable {
         typealias ID = String
@@ -65,7 +75,8 @@ open class SheetView: BaseView {
     private var isDraggingSheet = true {
         didSet {
             guard oldValue != isDraggingSheet else { return }
-            scrollView.lockedToTop = isDraggingSheet
+            print(isDraggingSheet)
+            trackedScrollView?.lockedToTop = isDraggingSheet
         }
     }
 
@@ -87,16 +98,10 @@ open class SheetView: BaseView {
             topRadius: 56,
             bottomRadius: .containerConcentric()
         )
-
-        scrollView.contentInsetAdjustmentBehavior = .never
-        scrollView.cornerConfiguration = UICornerConfiguration.uniformEdges(
-            topRadius: 56,
-            bottomRadius: .containerConcentric()
-        )
+        glassView.contentView.cornerConfiguration = glassView.cornerConfiguration
+        glassView.contentView.clipsToBounds = true
 
         addSubview(glassView)
-        scrollView.lockedToTop = true
-        glassView.contentView.addSubview(scrollView)
 
         grabberView.backgroundColor = UIColor.secondaryLabel.withAlphaComponent(0.4)
         grabberView.isUserInteractionEnabled = false
@@ -148,27 +153,33 @@ open class SheetView: BaseView {
     }
 
     func layoutGlassView() {
-        guard bounds.height > 0 else { return }
+        guard bounds.height > 0, bounds.width > 0 else { return }
 
         let largeSheetHeight = targetSheetHeight(detent: .large())
         let mediumSheetHeight = targetSheetHeight(detent: .medium())
         let currentSheetHeight = currentSheetHeight
         let finalSheetHeight = currentSheetHeight.clamp(sheetHeightRange.lowerBound, sheetHeightRange.upperBound)
 
-        let insets: CGFloat = ((largeSheetHeight - finalSheetHeight) / (largeSheetHeight - mediumSheetHeight))
-            .clamp(0, 1) * mediumSheetInsets
+        let detentRange = largeSheetHeight - mediumSheetHeight
+        let progress = detentRange > 0 ? ((largeSheetHeight - finalSheetHeight) / detentRange).clamp(0, 1) : 0
+        let insets: CGFloat = progress * mediumSheetInsets
+        let top = bounds.height - min(currentSheetHeight, finalSheetHeight)
+        let width = bounds.width
+        let height = finalSheetHeight
+
+        let scaleX = width > 0 ? ((width - insets * 2) / width).clamp(0, 1) : 1
+        let scaleY = height > 0 ? ((height - insets) / height).clamp(0, 1) : 1
+        let unscaledY = top - (height * (1 - scaleY) / 2)
 
         glassView.frameWithoutTransform = CGRect(
-            x: insets,
-            y: bounds.height - min(currentSheetHeight, finalSheetHeight),
-            width: bounds.width - insets * 2,
-            height: finalSheetHeight - insets
+            x: 0,
+            y: unscaledY,
+            width: width,
+            height: height
         )
+        glassView.transform = .identity.scaledBy(x: scaleX, y: scaleY)
 
-        scrollView.frameWithoutTransform = glassView.contentView.bounds
         layoutGrabberView()
-
-        // scrollView.contentInset = UIEdgeInsets(mediumSheetInsets - insets)
     }
 
     func layoutGrabberView() {
@@ -198,7 +209,8 @@ open class SheetView: BaseView {
         switch gr.state {
         case .began:
             springAnim.stop(resolveImmediately: true, postValueChanged: false)
-            overrideSheetHeight = currentSheetHeight + (scrollView.contentOffset.y + scrollView.adjustedContentInset.top)
+            let trackedScrollOffset = trackedScrollView.map { $0.contentOffset.y + $0.adjustedContentInset.top } ?? 0
+            overrideSheetHeight = currentSheetHeight + trackedScrollOffset
             beginDraggingSheet = currentSheetHeight <= sheetHeightRange.upperBound
             fallthrough
 
@@ -209,10 +221,14 @@ open class SheetView: BaseView {
             gr.setTranslation(.zero, in: nil)
 
             if isDraggingSheet, beginDraggingSheet {
-                scrollView.panGestureRecognizer.setTranslation(.zero, in: nil)
+                trackedScrollView?.panGestureRecognizer.setTranslation(.zero, in: nil)
             }
 
         default:
+            defer {
+                beginDraggingSheet = false
+            }
+
             let currentSheetHeight = currentSheetHeight
             if isDraggingSheet {
                 let stopSheetHeight = currentSheetHeight - gr.velocity(in: self).y * 0.3
@@ -270,6 +286,32 @@ open class SheetView: BaseView {
             abs(targetSheetHeight(detent: a) - sheetHeight) < abs(targetSheetHeight(detent: b) - sheetHeight)
         } ?? currentDetent
     }
+
+    private func trackScrollView(from recognizer: UIGestureRecognizer) -> Bool {
+        guard let scrollView = scrollView(for: recognizer),
+            scrollView.isDescendant(of: self)
+        else {
+            return false
+        }
+
+        trackedScrollView = scrollView
+        return true
+    }
+
+    private func scrollView(for recognizer: UIGestureRecognizer) -> UIScrollView? {
+        if let scrollView = recognizer.view as? UIScrollView {
+            return scrollView
+        }
+
+        var view = recognizer.view
+        while let current = view {
+            if let scrollView = current as? UIScrollView {
+                return scrollView
+            }
+            view = current.superview
+        }
+        return nil
+    }
 }
 
 @available(iOS 26.0, *)
@@ -278,29 +320,6 @@ extension SheetView: UIGestureRecognizerDelegate {
         _: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
-        if let otherScrollView = otherGestureRecognizer.view as? UIScrollView, otherScrollView == scrollView {
-            return true
-        }
-        return false
-    }
-}
-
-// MARK: - SheetScrollView
-
-final class SheetScrollView: UIScrollView {
-    var lockedToTop = false
-
-    override var contentOffset: CGPoint {
-        get {
-            super.contentOffset
-        }
-        set {
-            let oldValue = super.contentOffset
-            if lockedToTop {
-                super.contentOffset = CGPoint(x: newValue.x, y: -adjustedContentInset.top)
-            } else {
-                super.contentOffset = newValue
-            }
-        }
+        trackScrollView(from: otherGestureRecognizer)
     }
 }
