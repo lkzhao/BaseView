@@ -87,7 +87,7 @@ open class GradientView: BaseView {
                     for step in 1...Self.easedIntervalInsertedPointCount {
                         let linearT = CGFloat(step) / CGFloat(Self.easedIntervalInsertedPointCount + 1)
                         let easedT = easeFunction.value(at: linearT).clamp(0, 1)
-                        mappedColors.append(.interpolated(from: startColor, to: endColor, progress: easedT))
+                        mappedColors.append(lerp(from: startColor, to: endColor, progress: easedT))
                         mappedLocations.append(lerp(from: startLocation, to: endLocation, progress: linearT))
                     }
                 }

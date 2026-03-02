@@ -175,27 +175,6 @@ open class PortalPairView: UIView {
 
         let dismissedTransform = backgroundView.layer.presentation()?.transform ?? backgroundView.layer.transform
         let presentedTransform = foregroundView.layer.presentation()?.transform ?? foregroundView.layer.transform
-        layer.transform = interpolateTransform(from: dismissedTransform, to: presentedTransform, progress: clampedProgress)
-    }
-
-    private func interpolateTransform(from: CATransform3D, to: CATransform3D, progress: CGFloat) -> CATransform3D {
-        CATransform3D(
-            m11: lerp(from: from.m11, to: to.m11, progress: progress),
-            m12: lerp(from: from.m12, to: to.m12, progress: progress),
-            m13: lerp(from: from.m13, to: to.m13, progress: progress),
-            m14: lerp(from: from.m14, to: to.m14, progress: progress),
-            m21: lerp(from: from.m21, to: to.m21, progress: progress),
-            m22: lerp(from: from.m22, to: to.m22, progress: progress),
-            m23: lerp(from: from.m23, to: to.m23, progress: progress),
-            m24: lerp(from: from.m24, to: to.m24, progress: progress),
-            m31: lerp(from: from.m31, to: to.m31, progress: progress),
-            m32: lerp(from: from.m32, to: to.m32, progress: progress),
-            m33: lerp(from: from.m33, to: to.m33, progress: progress),
-            m34: lerp(from: from.m34, to: to.m34, progress: progress),
-            m41: lerp(from: from.m41, to: to.m41, progress: progress),
-            m42: lerp(from: from.m42, to: to.m42, progress: progress),
-            m43: lerp(from: from.m43, to: to.m43, progress: progress),
-            m44: lerp(from: from.m44, to: to.m44, progress: progress)
-        )
+        layer.transform = lerp(from: dismissedTransform, to: presentedTransform, progress: clampedProgress)
     }
 }

@@ -1,15 +1,6 @@
 {
-  "originHash" : "dcc32e68d878b12b483f4d6b1bcc4115f8a09e6c118155230af9e70190ad2e9b",
+  "originHash" : "14ce4a02eb2c80c9a590109f66ab07db523c5ec81cbfedf220cf5b155c504151",
   "pins" : [
-    {
-      "identity" : "basetoolbox",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/lkzhao/BaseToolbox",
-      "state" : {
-        "revision" : "35e0d889ee2d8bf7bbc6169283efb330609d9638",
-        "version" : "0.7.1"
-      }
-    },
     {
       "identity" : "motion",
       "kind" : "remoteSourceControl",
