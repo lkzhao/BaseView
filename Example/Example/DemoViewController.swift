@@ -216,6 +216,8 @@ private final class VisualEffectIntensityDemoView: BaseView {
         EffectOption(title: "Ultra Thin", effect: UIBlurEffect(style: .systemUltraThinMaterial)),
         EffectOption(title: "Regular Glass", effect: UIGlassEffect(style: .regular)),
         EffectOption(title: "Clear Glass", effect: UIGlassEffect(style: .clear)),
+        EffectOption(title: "Variable Blur", effect: UIBlurEffect.variable(direction: .topToBottom, radius: 8)),
+        EffectOption(title: "Variable Blur (Horizontal)", effect: UIBlurEffect.variable(direction: .leftToRight, radius: 8)),
     ]
 
     private var intensity: CGFloat = 0.6 {
@@ -326,7 +328,7 @@ private final class VisualEffectBackdropView: BaseView {
             ViewComponent<VisualEffectView>()
                 .effect(visualEffect)
                 .effectIntensity(intensity)
-                .size(width: .fill, height: .fill)
+                .size(width: 200, height: .fill)
                 .cornerRadius(20)
                 .inset(20)
         }
