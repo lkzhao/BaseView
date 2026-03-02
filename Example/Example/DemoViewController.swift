@@ -40,6 +40,7 @@ private final class DemoRootView: BaseView {
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundColor = .systemBackground
+        ClassRuntimePrinter.printInfo(for: "_UIFlexInteraction")
     }
 
     override func updateProperties() {
@@ -108,6 +109,20 @@ private final class DemoRootView: BaseView {
                 detail: "Adjust effect intensity and pick different blur styles.",
                 preview: ViewComponent<VisualEffectIntensityDemoView>()
                     .size(width: .fill, height: 380)
+            )
+
+            DemoCard(
+                title: "LensView",
+                detail: "A clear lens that lifts on press.",
+                preview: ViewComponent<LensDemoView>()
+                    .size(width: .fill, height: 160)
+            )
+            
+            DemoCard(
+                title: "Loupe View",
+                detail: "A magnifying loupe view that zooms.",
+                preview: ViewComponent<LoupeDemoView>()
+                    .size(width: .fill, height: 160)
             )
 
             DemoCard(
@@ -312,6 +327,115 @@ private final class VisualEffectBackdropView: BaseView {
                 .inset(20)
         }
         .fill()
+    }
+}
+
+private final class LensDemoView: BaseView {
+    private let lensView = LensView()
+    private lazy var pressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handlePress(_:)))
+
+    private var isPressing = false {
+        didSet {
+            guard isPressing != oldValue else { return }
+            lensView.setLifted(isPressing, animated: true, alongsideAnimations: {
+                self.lensView.transform = .identity.scaledBy(self.isPressing ? 1.2 : 1)
+            })
+        }
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        backgroundColor = UIColor.secondarySystemBackground
+        cornerRadius = 12
+        clipsToBounds = true
+        pressGesture.minimumPressDuration = 0
+        lensView.addGestureRecognizer(pressGesture)
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+        componentEngine.component = ZStack {
+            Space(width: 110, height: 110)
+                .backgroundColor(UIColor(red: 0.98, green: 0.55, blue: 0.35, alpha: 0.9))
+                .roundedCorner()
+                .offset(x: -28, y: -20)
+
+            Space(width: 95, height: 95)
+                .backgroundColor(UIColor(red: 0.22, green: 0.84, blue: 0.76, alpha: 0.86))
+                .roundedCorner()
+                .offset(x: 48, y: 20)
+
+            Space(width: 120, height: 120)
+                .backgroundColor(UIColor(red: 0.35, green: 0.50, blue: 0.98, alpha: 0.88))
+                .roundedCorner()
+                .offset(x: 120, y: -30)
+
+            Text("Press and hold", font: .boldSystemFont(ofSize: 20))
+
+            lensView
+                .size(width: 200, height: 80)
+                .inset(20)
+        }
+        .fill()
+    }
+
+    @objc private func handlePress(_ gesture: UILongPressGestureRecognizer) {
+        switch gesture.state {
+        case .began, .changed:
+            let local = gesture.location(in: self)
+            isPressing = bounds.contains(local)
+        default:
+            isPressing = false
+        }
+    }
+}
+
+private final class LoupeDemoView: BaseView {
+    let loupeView = LoupeView()
+    private lazy var pressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handlePress(_:)))
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        backgroundColor = UIColor.secondarySystemBackground
+        cornerRadius = 12
+        clipsToBounds = true
+        pressGesture.minimumPressDuration = 0
+        addGestureRecognizer(pressGesture)
+        addSubview(loupeView)
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+        componentEngine.component = ZStack {
+            Space(width: 110, height: 110)
+                .backgroundColor(UIColor(red: 0.98, green: 0.55, blue: 0.35, alpha: 0.9))
+                .roundedCorner()
+                .offset(x: -28, y: -20)
+
+            Space(width: 95, height: 95)
+                .backgroundColor(UIColor(red: 0.22, green: 0.84, blue: 0.76, alpha: 0.86))
+                .roundedCorner()
+                .offset(x: 48, y: 20)
+
+            Space(width: 120, height: 120)
+                .backgroundColor(UIColor(red: 0.35, green: 0.50, blue: 0.98, alpha: 0.88))
+                .roundedCorner()
+                .offset(x: 120, y: -30)
+
+            Text("Press and hold", font: .boldSystemFont(ofSize: 20))
+        }
+        .fill()
+    }
+
+    @objc private func handlePress(_ gesture: UILongPressGestureRecognizer) {
+        switch gesture.state {
+        case .began, .changed:
+            let local = gesture.location(in: self)
+            loupeView.isActive = bounds.contains(local)
+            loupeView.frameWithoutTransform = CGRect(center: local, size: CGSize(width: 120, height: 120))
+        default:
+            loupeView.isActive = false
+        }
     }
 }
 

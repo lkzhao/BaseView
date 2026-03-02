@@ -14,7 +14,7 @@ open class PortalView: UIView {
         static let hidesSourceLayerInOtherPortals = #ObfuscatedString("hidesSourceLayerInOtherPortals")
     }
 
-    private var portalView: UIView?
+    internal var portalView: UIView?
 
     /// Whether the underlying portal implementation is available on this system.
     public private(set) var isAvailable = false
