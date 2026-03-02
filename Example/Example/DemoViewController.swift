@@ -5,17 +5,24 @@ import BaseToolbox
 import Motion
 
 final class DemoViewController: UIViewController {
+    private let rootView = DemoRootView()
+
     override func loadView() {
-        view = DemoRootView()
+        view = rootView
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "BaseView Example"
+        rootView.onShowGlassExample = { [weak self] in
+            self?.navigationController?.pushViewController(GlassVariantsViewController(), animated: true)
+        }
     }
 }
 
 private final class DemoRootView: BaseView {
+    var onShowGlassExample: (() -> Void)?
+
     @available(iOS 26.0, *)
     let sheetView = SheetView().then {
         let smallDetent = SheetView.Detent.custom(identifier: "small") {
@@ -108,6 +115,23 @@ private final class DemoRootView: BaseView {
             )
 
             DemoCard(
+                title: "Glass Variants",
+                detail: "Tap to push a dedicated screen with _UIViewGlass variants.",
+                preview: VStack(spacing: 6, alignItems: .center) {
+                    Text("Open Glass Variant Gallery", font: .systemFont(ofSize: 16, weight: .semibold))
+                        .textColor(.white)
+                    Text("Pushes to full-screen example", font: .systemFont(ofSize: 13))
+                        .textColor(UIColor.white.withAlphaComponent(0.85))
+                }
+                .inset(14)
+                .backgroundColor(UIColor(red: 0.14, green: 0.22, blue: 0.44, alpha: 1.0))
+                .cornerRadius(14)
+                .tappableView { [weak self] in
+                    self?.onShowGlassExample?()
+                }
+            )
+
+            DemoCard(
                 title: "PortalPairView",
                 detail: "Tap to spring-animate progress and frame interpolation between two label anchors.",
                 preview: ViewComponent<PortalPairDemoView>()
@@ -122,6 +146,7 @@ private final class DemoRootView: BaseView {
             )
         }
         .inset(20)
+        .inset(bottom: 120)
         .scrollView()
         .fill()
         .overlay {

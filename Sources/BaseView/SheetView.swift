@@ -12,7 +12,7 @@ import Motion
 open class SheetView: BaseView {
 
     lazy var panGR = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gr:)))
-    let glassView = UIVisualEffectView(effect: UIGlassEffect(style: .regular).with(\.isInteractive, value: true))
+    public let glassView = UIVisualEffectView(effect: UIGlassEffect(style: .regular).with(\.isInteractive, value: true))
     var mediumSheetInsets: CGFloat = 6
 
     var onHeightChange: ((CGFloat) -> Void)?

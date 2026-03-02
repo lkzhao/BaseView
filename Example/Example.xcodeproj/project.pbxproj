@@ -361,17 +361,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		B152CFBD2F54DA1300497663 /* XCRemoteSwiftPackageReference "Motion" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/b3ll/Motion";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.5;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
 /* Begin XCLocalSwiftPackageReference section */
 		B152CFB62F54D9FB00497663 /* XCLocalSwiftPackageReference "../../BaseView" */ = {
 			isa = XCLocalSwiftPackageReference;
@@ -382,6 +371,17 @@
 			relativePath = ../../UIComponent;
 		};
 /* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B152CFBD2F54DA1300497663 /* XCRemoteSwiftPackageReference "Motion" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/b3ll/Motion";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.5;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		B152CFB72F54D9FB00497663 /* BaseView */ = {
