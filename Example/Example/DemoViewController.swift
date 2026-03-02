@@ -29,11 +29,12 @@ private final class DemoRootView: BaseView {
             smallDetent
         ]
         $0.setCurrentDetent(smallDetent, animated: false)
-        $0.contentView.componentEngine.component = VStack(spacing: 8) {
+        $0.contentView.componentEngine.component = VStack(spacing: 16) {
+            Text("SheetView", font: .boldSystemFont(ofSize: 32))
             for i in 0...100 {
                 Text("Sheet Item \(i)", font: .systemFont(ofSize: 16))
             }
-        }.inset(20).scrollView().fill()
+        }.inset(v: 30, h: 20).scrollView().fill()
     }
 
     override func viewDidLoad() {
