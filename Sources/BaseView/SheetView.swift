@@ -1,15 +1,9 @@
-//
-//  SheetView.swift
-//  BaseView
-//
-//  Created by Luke Zhao on 3/1/26.
-//
-
 import UIKit
 import Motion
 
+/// Draggable bottom sheet view with detents and scroll-view coordination.
 @available(iOS 26.0, *)
-public class SheetView: BaseView {
+public class SheetView: SubviewHitTestOnlyView {
 
     public struct Detent: Equatable, Identifiable {
 
@@ -98,10 +92,6 @@ public class SheetView: BaseView {
     public override func layoutSubviews() {
         super.layoutSubviews()
         layoutGlassView()
-    }
-
-    public override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        glassView.point(inside: convert(point, to: glassView), with: event)
     }
 
     override open func didMoveToWindow() {
