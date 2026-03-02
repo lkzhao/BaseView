@@ -25,7 +25,7 @@ private final class DemoRootView: BaseView {
 
     @available(iOS 26.0, *)
     let sheetView = SheetView().then {
-        let smallDetent = SheetView.Detent.custom(identifier: "small") {
+        let smallDetent = SheetView.Detent.custom(id: "small") {
             120
         }
         $0.detents = [
