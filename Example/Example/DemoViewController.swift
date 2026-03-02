@@ -16,6 +16,19 @@ final class DemoViewController: UIViewController {
 }
 
 private final class DemoRootView: BaseView {
+    @available(iOS 26.0, *)
+    let sheetView = SheetView().then {
+        let smallDetent = SheetView.Detent.custom(identifier: "small") {
+            120
+        }
+        $0.detents = [
+            .large(),
+            .medium(),
+            smallDetent
+        ]
+        $0.setCurrentDetent(smallDetent, animated: false)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundColor = .systemBackground
@@ -106,6 +119,9 @@ private final class DemoRootView: BaseView {
         .inset(20)
         .scrollView()
         .fill()
+        .overlay {
+            sheetView
+        }
     }
 }
 
