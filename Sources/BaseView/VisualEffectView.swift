@@ -31,6 +31,16 @@ open class VisualEffectView: UIVisualEffectView {
         commonInit(with: initialEffect)
     }
 
+    open override func didMoveToWindow() {
+        super.didMoveToWindow()
+
+        guard window != nil, let targetEffect else { return }
+
+        // `UIVisualEffectView` can ignore `fractionComplete` until attached to a window.
+        // Rebuilding the animator here guarantees the initial intensity is applied.
+        setTargetEffect(targetEffect)
+    }
+
     deinit {
         effectAnimator?.stopAnimation(true)
     }
@@ -53,7 +63,7 @@ open class VisualEffectView: UIVisualEffectView {
         effectAnimator = nil
         setUnderlyingEffect(nil)
 
-        guard let effect else { return }
+        guard let effect, window != nil else { return }
 
         let animator = UIViewPropertyAnimator(duration: 1, curve: .linear) { [weak self] in
             self?.setUnderlyingEffect(effect)
