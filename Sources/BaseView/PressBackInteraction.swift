@@ -1,27 +1,20 @@
 import UIKit
+import BaseToolbox
+import Motion
 
 /// Interaction that pushes a view backward in 3D while pressed, with perspective and tilt.
 open class PressBackInteraction: NSObject, UIInteraction {
     /// Maximum tilt angle in radians for each axis based on touch position.
-    open var maximumTiltAngle: CGFloat = .pi / 16
+    open var maximumTiltAngle: CGFloat = .pi / 8
 
     /// Depth (in points) the view moves backward while pressed.
-    open var pressedDepth: CGFloat = 24
+    open var pressedDepth: CGFloat = 30
 
     /// Perspective distance used for `m34` (`-1 / distance`).
-    open var perspectiveDistance: CGFloat = 700
+    open var perspectiveDistance: CGFloat = 500
 
-    /// Animation duration for press-in and pointer updates.
-    open var pressInDuration: TimeInterval = 0.25
-
-    /// Damping ratio used when pressing and updating the pointer position.
-    open var pressDampingRatio: CGFloat = 0.82
-
-    /// Animation duration for releasing back to the resting state.
-    open var releaseDuration: TimeInterval = 0.6
-
-    /// Damping ratio used when releasing back to the resting state.
-    open var releaseDampingRatio: CGFloat = 0.5
+    open var response: Double = 0.4
+    open var dampingRatio: CGFloat = 0.5
 
     public private(set) weak var view: UIView?
     private lazy var pressRecognizer = SimultaneousPressGestureRecognizer(
@@ -29,11 +22,35 @@ open class PressBackInteraction: NSObject, UIInteraction {
         action: #selector(handlePress(_:))
     )
 
-    private var restingTransform = CATransform3DIdentity
-    private var isPressing = false
+    private var targetPressDeltaTransform = CATransform3DIdentity {
+        didSet {
+            guard targetPressDeltaTransform != oldValue else { return }
+            applyInterpolatedTransform()
+        }
+    }
+    private let pressProgressAnimation = SpringAnimation<CGFloat>(initialValue: 0)
+    private var pressProgress: CGFloat = 0 {
+        didSet {
+            guard pressProgress != oldValue else { return }
+            applyInterpolatedTransform()
+        }
+    }
+    private var isPressing = false {
+        didSet {
+            guard oldValue != isPressing else { return }
+            pressProgressAnimation.configure(response: response, dampingRatio: dampingRatio)
+            pressProgressAnimation.updateValue(to: pressProgress)
+            pressProgressAnimation.toValue = isPressing ? 1 : 0
+            pressProgressAnimation.start()
+        }
+    }
 
     public override init() {
         super.init()
+        pressProgressAnimation.resolvingEpsilon = 0.001
+        pressProgressAnimation.onValueChanged(disableActions: true) { [weak self] value in
+            self?.pressProgress = value
+        }
     }
 
     // MARK: - UIInteraction
@@ -41,11 +58,10 @@ open class PressBackInteraction: NSObject, UIInteraction {
     open func willMove(to view: UIView?) {
         guard let currentView = self.view else { return }
         currentView.removeGestureRecognizer(pressRecognizer)
-
-        if isPressing {
-            currentView.layer.transform = restingTransform
-            isPressing = false
-        }
+        pressProgressAnimation.stop(resolveImmediately: true, postValueChanged: false)
+        targetPressDeltaTransform = CATransform3DIdentity
+        pressProgress = 0
+        isPressing = false
     }
 
     open func didMove(to view: UIView?) {
@@ -57,58 +73,46 @@ open class PressBackInteraction: NSObject, UIInteraction {
 
     @objc private func handlePress(_ gesture: UILongPressGestureRecognizer) {
         guard let view else { return }
+        let location = gesture.location(in: view)
 
         switch gesture.state {
         case .began:
-            restingTransform = view.layer.transform
             isPressing = true
             fallthrough
-
         case .changed:
-            if !isPressing {
-                restingTransform = view.layer.transform
-                isPressing = true
-            }
-
-            let location = gesture.location(in: view)
-            let transform = pressedTransform(for: location, in: view.bounds)
-            animate(view, to: transform, duration: pressInDuration, damping: pressDampingRatio)
-
+            targetPressDeltaTransform = pressedDeltaTransform(for: location, in: view.bounds)
         default:
-            guard isPressing else { return }
             isPressing = false
-            animate(view, to: restingTransform, duration: releaseDuration, damping: releaseDampingRatio)
         }
     }
 
-    private func pressedTransform(for location: CGPoint, in bounds: CGRect) -> CATransform3D {
-        let normalizedX = normalizedCoordinate(location.x, extent: bounds.width)
-        let normalizedY = normalizedCoordinate(location.y, extent: bounds.height)
-
+    private func pressedDeltaTransform(for location: CGPoint, in bounds: CGRect) -> CATransform3D {
+        let centerX = bounds.midX
+        let centerY = bounds.midY
+        let diagonalRadius = max(hypot(bounds.width, bounds.height) * 0.5, 1)
+        let offsetX = location.x - centerX
+        let offsetY = location.y - centerY
+        let offsetMagnitude = hypot(offsetX, offsetY)
+        let normalizedMagnitude = min(offsetMagnitude / diagonalRadius, 1)
+        let directionX = offsetMagnitude > 0 ? offsetX / offsetMagnitude : 0
+        let directionY = offsetMagnitude > 0 ? offsetY / offsetMagnitude : 0
+        let normalizedX = directionX * normalizedMagnitude
+        let normalizedY = directionY * normalizedMagnitude
         var delta = CATransform3D.identity
         delta.m34 = -1 / max(perspectiveDistance, 1)
         delta.rotateBy(x: -normalizedY * maximumTiltAngle)
         delta.rotateBy(y: normalizedX * maximumTiltAngle)
         delta.translateBy(z: -pressedDepth)
-        return restingTransform.concatenating(delta)
+        return delta
     }
 
-    private func normalizedCoordinate(_ value: CGFloat, extent: CGFloat) -> CGFloat {
-        guard extent > 0 else { return 0 }
-        let normalized = (value / extent) * 2 - 1
-        return min(max(normalized, -1), 1)
-    }
-
-    private func animate(_ view: UIView, to transform: CATransform3D, duration: TimeInterval, damping: CGFloat) {
-        UIView.animate(
-            withDuration: duration,
-            delay: 0,
-            usingSpringWithDamping: damping,
-            initialSpringVelocity: 0,
-            options: [.allowUserInteraction, .beginFromCurrentState, .curveEaseOut]
-        ) {
-            view.layer.transform = transform
-        }
+    private func applyInterpolatedTransform() {
+        guard let view else { return }
+        view.layer.transform = lerp(
+            from: .identity,
+            to: targetPressDeltaTransform,
+            progress: pressProgress
+        )
     }
 }
 

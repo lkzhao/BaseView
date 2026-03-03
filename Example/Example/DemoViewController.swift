@@ -45,7 +45,7 @@ private final class DemoRootView: BaseView {
 
     override func updateProperties() {
         super.updateProperties()
-        componentEngine.component = VStack(spacing: 18, alignItems: .stretch) {
+        componentEngine.component = VStack(spacing: 36) {
             DemoCard(
                 title: "BaseView",
                 detail: "Base class with viewDidLoad/updateProperties hooks and shadow-path support.",
@@ -73,7 +73,7 @@ private final class DemoRootView: BaseView {
                         .locations([0.0, 0.5, 1.0])
                         .startPoint(CGPoint(x: 0.0, y: 0.0))
                         .endPoint(CGPoint(x: 1.0, y: 1.0))
-                        .cornerRadius(14)
+                        .cornerRadius(16)
                         .size(width: .fill, height: 84)
                     Text("Linear Gradient", font: .boldSystemFont(ofSize: 20))
                         .textColor(.white)
@@ -88,7 +88,7 @@ private final class DemoRootView: BaseView {
                     .shimmerColor(UIColor(red: 0.57, green: 0.75, blue: 0.96, alpha: 1.0))
                     .shimmerDuration(1.1)
                     .size(width: .fill, height: 58)
-                    .cornerRadius(14)
+                    .cornerRadius(16)
             )
 
             DemoCard(
@@ -100,8 +100,10 @@ private final class DemoRootView: BaseView {
                     .textAlignment(.center)
                     .baseColor(UIColor(red: 0.22, green: 0.26, blue: 0.36, alpha: 1.0))
                     .shimmerColor(UIColor(red: 0.86, green: 0.91, blue: 0.99, alpha: 1.0))
+                    .view()
+                    .backgroundColor(.secondarySystemBackground)
+                    .cornerRadius(16)
                     .size(width: .fill, height: 58)
-                    .cornerRadius(14)
             )
 
             DemoCard(
@@ -162,10 +164,12 @@ private struct DemoCard<Content: Component>: ComponentBuilder {
     let preview: Content
 
     func build() -> some Component {
-        VStack(spacing: 10, alignItems: .stretch) {
-            Text(title, font: .boldSystemFont(ofSize: 18))
-            Text(detail, font: .systemFont(ofSize: 14))
-                .textColor(.secondaryLabel)
+        VStack(spacing: 10) {
+            VStack(spacing: 4) {
+                Text(title, font: .boldSystemFont(ofSize: 18))
+                Text(detail, font: .systemFont(ofSize: 14))
+                    .textColor(.secondaryLabel)
+            }
             preview
         }
     }
@@ -193,7 +197,7 @@ private final class LabelWrapperDemoView: WrapperView<UILabel> {
 
         inset = UIEdgeInsets(top: 12, left: 14, bottom: 12, right: 14)
         backgroundColor = UIColor.systemGreen.withAlphaComponent(0.18)
-        layer.cornerRadius = 12
+        cornerRadius = 16
         clipsToBounds = true
 
         contentView.text = "WrapperView controls insets and delegates sizing to contentView."
@@ -242,14 +246,14 @@ private final class VisualEffectIntensityDemoView: BaseView {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        backgroundColor = UIColor.secondarySystemBackground
-        cornerRadius = 12
+        backgroundColor = .secondarySystemBackground
+        cornerRadius = 16
         clipsToBounds = true
     }
 
     override func updateProperties() {
         super.updateProperties()
-        componentEngine.component = VStack(spacing: 8, alignItems: .stretch) {
+        componentEngine.component = VStack(spacing: 8) {
             ViewComponent<VisualEffectBackdropView>()
                 .intensity(intensity)
                 .visualEffect(selectedEffect)
@@ -338,8 +342,8 @@ private final class LensDemoView: BaseView {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        backgroundColor = UIColor.secondarySystemBackground
-        cornerRadius = 12
+        backgroundColor = .secondarySystemBackground
+        cornerRadius = 16
         clipsToBounds = true
         pressGesture.minimumPressDuration = 0
         lensView.addGestureRecognizer(pressGesture)
@@ -403,8 +407,8 @@ private final class LoupeDemoView: BaseView {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        backgroundColor = UIColor.secondarySystemBackground
-        cornerRadius = 12
+        backgroundColor = .secondarySystemBackground
+        cornerRadius = 16
         clipsToBounds = true
         pressGesture.minimumPressDuration = 0
         addGestureRecognizer(pressGesture)
@@ -437,8 +441,8 @@ private final class PressBackInteractionDemoView: BaseView {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        backgroundColor = UIColor.secondarySystemBackground
-        cornerRadius = 12
+        backgroundColor = .secondarySystemBackground
+        cornerRadius = 16
         clipsToBounds = true
     }
 
@@ -590,8 +594,8 @@ private final class PortalPairDemoView: BaseView {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        backgroundColor = UIColor.secondarySystemBackground
-        cornerRadius = 12
+        backgroundColor = .secondarySystemBackground
+        cornerRadius = 16
         clipsToBounds = true
 
         addSubview(portalPairView)
@@ -635,22 +639,15 @@ private final class PortalPairDemoView: BaseView {
     private func interpolatedFrame(progress: CGFloat) -> CGRect {
         let fromFrame = topLeftLabel.frameWithoutTransform
         let toFrame = bottomRightLabel.frameWithoutTransform
-        return CGRect(
-            x: interpolate(from: fromFrame.minX, to: toFrame.minX, progress: progress),
-            y: interpolate(from: fromFrame.minY, to: toFrame.minY, progress: progress),
-            width: interpolate(from: fromFrame.width, to: toFrame.width, progress: progress),
-            height: interpolate(from: fromFrame.height, to: toFrame.height, progress: progress)
-        )
-    }
-
-    private func interpolate(from: CGFloat, to: CGFloat, progress: CGFloat) -> CGFloat {
-        from + (to - from) * progress
+        return lerp(from: fromFrame, to: toFrame, progress: progress)
     }
 }
 
 private final class BadgeShapeDemoView: ShapeView {
     override func viewDidLoad() {
         super.viewDidLoad()
+        backgroundColor = .secondarySystemBackground
+        cornerRadius = 16
         fillColor = UIColor.systemTeal.withAlphaComponent(0.20)
         strokeColor = .systemTeal
         lineWidth = 3
@@ -664,13 +661,8 @@ private final class BadgeShapeDemoView: ShapeView {
 
         let outlineRect = bounds.insetBy(dx: 16, dy: 14)
         let outline = UIBezierPath(roundedRect: outlineRect, cornerRadius: 14)
-
-        let checkmark = UIBezierPath()
-        checkmark.move(to: CGPoint(x: outlineRect.minX + outlineRect.width * 0.28, y: outlineRect.midY))
-        checkmark.addLine(to: CGPoint(x: outlineRect.midX - 2, y: outlineRect.maxY - outlineRect.height * 0.26))
-        checkmark.addLine(to: CGPoint(x: outlineRect.maxX - outlineRect.width * 0.22, y: outlineRect.minY + outlineRect.height * 0.30))
-
-        outline.append(checkmark)
+        let circle = UIBezierPath(ovalIn: CGRect(center: outlineRect.center, size: CGSize(width: 30, height: 30)))
+        outline.append(circle)
         path = outline
     }
 }
