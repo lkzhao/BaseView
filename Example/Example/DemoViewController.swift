@@ -308,32 +308,18 @@ private final class VisualEffectBackdropView: BaseView {
     override func updateProperties() {
         super.updateProperties()
         componentEngine.component = ZStack {
-            Space(width: 110, height: 110)
-                .backgroundColor(UIColor(red: 0.98, green: 0.55, blue: 0.35, alpha: 0.9))
-                .roundedCorner()
-                .offset(x: -26, y: -14)
-
-            Space(width: 95, height: 95)
-                .backgroundColor(UIColor(red: 0.22, green: 0.84, blue: 0.76, alpha: 0.86))
-                .roundedCorner()
-                .offset(x: 36, y: 18)
-
-            Space(width: 120, height: 120)
-                .backgroundColor(UIColor(red: 0.35, green: 0.50, blue: 0.98, alpha: 0.88))
-                .roundedCorner()
-                .offset(x: 110, y: -24)
+            ViewComponent<BackgroundCirclesView>().fill()
 
             Text("Blur Sample", font: .boldSystemFont(ofSize: 20))
                 .textColor(UIColor.white.withAlphaComponent(0.95))
 
-            ViewComponent<VisualEffectView>()
+            ViewComponent<UIVisualEffectView>()
                 .effect(visualEffect)
                 .effectIntensity(intensity)
                 .size(width: 200, height: .fill)
                 .cornerRadius(20)
                 .inset(20)
         }
-        .fill()
     }
 }
 
@@ -362,6 +348,36 @@ private final class LensDemoView: BaseView {
     override func updateProperties() {
         super.updateProperties()
         componentEngine.component = ZStack {
+            ViewComponent<BackgroundCirclesView>().fill()
+
+            Text("Press and hold", font: .boldSystemFont(ofSize: 20))
+
+            lensView
+                .size(width: 200, height: 80)
+                .inset(20)
+        }
+    }
+
+    @objc private func handlePress(_ gesture: UILongPressGestureRecognizer) {
+        switch gesture.state {
+        case .began, .changed:
+            let local = gesture.location(in: self)
+            isPressing = bounds.contains(local)
+        default:
+            isPressing = false
+        }
+    }
+}
+
+private final class BackgroundCirclesView: BaseView {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        backgroundColor = .clear
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+        componentEngine.component = ZStack {
             Space(width: 110, height: 110)
                 .backgroundColor(UIColor(red: 0.98, green: 0.55, blue: 0.35, alpha: 0.9))
                 .roundedCorner()
@@ -376,24 +392,8 @@ private final class LensDemoView: BaseView {
                 .backgroundColor(UIColor(red: 0.35, green: 0.50, blue: 0.98, alpha: 0.88))
                 .roundedCorner()
                 .offset(x: 120, y: -30)
-
-            Text("Press and hold", font: .boldSystemFont(ofSize: 20))
-
-            lensView
-                .size(width: 200, height: 80)
-                .inset(20)
         }
         .fill()
-    }
-
-    @objc private func handlePress(_ gesture: UILongPressGestureRecognizer) {
-        switch gesture.state {
-        case .began, .changed:
-            let local = gesture.location(in: self)
-            isPressing = bounds.contains(local)
-        default:
-            isPressing = false
-        }
     }
 }
 
@@ -414,24 +414,10 @@ private final class LoupeDemoView: BaseView {
     override func updateProperties() {
         super.updateProperties()
         componentEngine.component = ZStack {
-            Space(width: 110, height: 110)
-                .backgroundColor(UIColor(red: 0.98, green: 0.55, blue: 0.35, alpha: 0.9))
-                .roundedCorner()
-                .offset(x: -28, y: -20)
-
-            Space(width: 95, height: 95)
-                .backgroundColor(UIColor(red: 0.22, green: 0.84, blue: 0.76, alpha: 0.86))
-                .roundedCorner()
-                .offset(x: 48, y: 20)
-
-            Space(width: 120, height: 120)
-                .backgroundColor(UIColor(red: 0.35, green: 0.50, blue: 0.98, alpha: 0.88))
-                .roundedCorner()
-                .offset(x: 120, y: -30)
+            ViewComponent<BackgroundCirclesView>().fill()
 
             Text("Press and hold", font: .boldSystemFont(ofSize: 20))
         }
-        .fill()
     }
 
     @objc private func handlePress(_ gesture: UILongPressGestureRecognizer) {
@@ -458,24 +444,24 @@ private final class PressBackInteractionDemoView: BaseView {
 
     override func updateProperties() {
         super.updateProperties()
-        componentEngine.component = VStack(spacing: 6, alignItems: .center) {
-            Text("Press and hold", font: .boldSystemFont(ofSize: 20))
-                .textColor(.white)
-            Text("Move finger to tilt", font: .systemFont(ofSize: 13, weight: .semibold))
-                .textColor(UIColor.white.withAlphaComponent(0.86))
+        componentEngine.component = ZStack {
+            ViewComponent<BackgroundCirclesView>().fill()
+
+            VStack(spacing: 6, alignItems: .center) {
+                Text("Press and hold", font: .boldSystemFont(ofSize: 20))
+                Text("Move finger to tilt", font: .systemFont(ofSize: 13, weight: .semibold))
+                    .textColor(.secondaryLabel)
+            }
+            .inset(40)
+            .visualEffectView()
+            .effect(UIGlassEffect(style: .regular))
+            .cornerRadius(24)
+            .view()
+            .zPosition(700)
+            .update { [pressBackInteraction] in
+                $0.addInteraction(pressBackInteraction)
+            }
         }
-        .inset(40)
-        .view()
-        .update { [pressBackInteraction] in
-            $0.addInteraction(pressBackInteraction)
-        }
-        .backgroundColor(UIColor(red: 0.17, green: 0.26, blue: 0.52, alpha: 1.0))
-        .cornerRadius(24)
-        .shadowColor(.black)
-        .shadowOpacity(0.1)
-        .shadowRadius(20)
-        .shadowOffset(.zero)
-        .centered()
     }
 }
 

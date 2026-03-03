@@ -85,12 +85,12 @@ open class PressBackInteraction: NSObject, UIInteraction {
         let normalizedX = normalizedCoordinate(location.x, extent: bounds.width)
         let normalizedY = normalizedCoordinate(location.y, extent: bounds.height)
 
-        var delta = CATransform3DIdentity
+        var delta = CATransform3D.identity
         delta.m34 = -1 / max(perspectiveDistance, 1)
-        delta = CATransform3DRotate(delta, -normalizedY * maximumTiltAngle, 1, 0, 0)
-        delta = CATransform3DRotate(delta, normalizedX * maximumTiltAngle, 0, 1, 0)
-        delta = CATransform3DTranslate(delta, 0, 0, -pressedDepth)
-        return CATransform3DConcat(restingTransform, delta)
+        delta.rotateBy(x: -normalizedY * maximumTiltAngle)
+        delta.rotateBy(y: normalizedX * maximumTiltAngle)
+        delta.translateBy(z: -pressedDepth)
+        return restingTransform.concatenating(delta)
     }
 
     private func normalizedCoordinate(_ value: CGFloat, extent: CGFloat) -> CGFloat {
