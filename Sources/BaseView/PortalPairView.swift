@@ -11,8 +11,8 @@ open class PortalPairView: UIView {
     private let containerView: UIView
     private let styleAnimator = UIViewPropertyAnimator(duration: 0.5, curve: .linear)
 
-    private let backgroundEffectView: VisualEffectView?
-    private let foregroundEffectView: VisualEffectView?
+    private let backgroundEffectView: UIVisualEffectView?
+    private let foregroundEffectView: UIVisualEffectView?
 
     open var progress: CGFloat = 0 {
         didSet {
@@ -28,11 +28,11 @@ open class PortalPairView: UIView {
            let foregroundEffectSource = foregroundView as? UIVisualEffectView {
             let containerView = UIView()
 
-            let backgroundEffectView = VisualEffectView(effect: backgroundEffectSource.effect)
+            let backgroundEffectView = UIVisualEffectView(effect: backgroundEffectSource.effect)
             backgroundEffectView.effectIntensity = 1
             backgroundEffectView.overrideUserInterfaceStyle = backgroundEffectSource.traitCollection.userInterfaceStyle
 
-            let foregroundEffectView = VisualEffectView(effect: foregroundEffectSource.effect)
+            let foregroundEffectView = UIVisualEffectView(effect: foregroundEffectSource.effect)
             foregroundEffectView.effectIntensity = 0
             foregroundEffectView.overrideUserInterfaceStyle = foregroundEffectSource.traitCollection.userInterfaceStyle
 
