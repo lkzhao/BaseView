@@ -2,6 +2,7 @@ import UIKit
 import BaseToolbox
 
 /// Magnifying loupe view backed by `PortalView` and `LensView`.
+@available(iOS 26.0, *)
 open class LoupeView: BaseView {
     private let portalView = PortalView()
     private let portalContainerView = UIView()

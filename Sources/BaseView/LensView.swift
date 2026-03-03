@@ -2,6 +2,7 @@ import UIKit
 import ObfuscateMacro
 
 /// Wrapper around private `_UILiquidLensView` with a safe fallback when unavailable.
+@available(iOS 26.0, *)
 open class LensView: UIView {
     private enum ObfuscatedKeys {
         static let liquidLensClass = #ObfuscatedString("_UILiquidLensView")
