@@ -5,8 +5,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/lkzhao/BaseToolbox",
       "state" : {
-        "revision" : "35e0d889ee2d8bf7bbc6169283efb330609d9638",
-        "version" : "0.7.1"
+        "revision" : "a9cf2c5fa8fff80028a405f179a2af36c24faff4",
+        "version" : "0.8.0"
+      }
+    },
+    {
+      "identity" : "motion",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/b3ll/Motion",
+      "state" : {
+        "revision" : "d0439dd8f31ef16c3e17ef12e8d1921b00341d67",
+        "version" : "0.1.5"
       }
     },
     {

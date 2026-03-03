@@ -126,6 +126,13 @@ private final class DemoRootView: BaseView {
             )
 
             DemoCard(
+                title: "PressBackInteraction",
+                detail: "Press to push the card backward in 3D; tilt follows your finger position.",
+                preview: ViewComponent<PressBackInteractionDemoView>()
+                    .size(width: .fill, height: 190)
+            )
+
+            DemoCard(
                 title: "PortalPairView",
                 detail: "Tap to spring-animate progress and frame interpolation between two label anchors.",
                 preview: ViewComponent<PortalPairDemoView>()
@@ -436,6 +443,39 @@ private final class LoupeDemoView: BaseView {
         default:
             loupeView.isActive = false
         }
+    }
+}
+
+private final class PressBackInteractionDemoView: BaseView {
+    private let pressBackInteraction = PressBackInteraction()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        backgroundColor = UIColor.secondarySystemBackground
+        cornerRadius = 12
+        clipsToBounds = true
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+        componentEngine.component = VStack(spacing: 6, alignItems: .center) {
+            Text("Press and hold", font: .boldSystemFont(ofSize: 20))
+                .textColor(.white)
+            Text("Move finger to tilt", font: .systemFont(ofSize: 13, weight: .semibold))
+                .textColor(UIColor.white.withAlphaComponent(0.86))
+        }
+        .inset(40)
+        .view()
+        .update { [pressBackInteraction] in
+            $0.addInteraction(pressBackInteraction)
+        }
+        .backgroundColor(UIColor(red: 0.17, green: 0.26, blue: 0.52, alpha: 1.0))
+        .cornerRadius(24)
+        .shadowColor(.black)
+        .shadowOpacity(0.1)
+        .shadowRadius(20)
+        .shadowOffset(.zero)
+        .centered()
     }
 }
 
