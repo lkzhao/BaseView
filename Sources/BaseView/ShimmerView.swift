@@ -2,6 +2,8 @@ import UIKit
 
 /// Animated gradient view that moves light bands across a base color to create a shimmer effect.
 open class ShimmerView: GradientView {
+    private var hasRegisteredAppForegroundObserver = false
+
     open var shimmerColor: UIColor = UIColor(white: 0.1, alpha: 1) {
         didSet {
             guard shimmerColor != oldValue else { return }
@@ -31,10 +33,27 @@ open class ShimmerView: GradientView {
         colors = [baseColor, shimmerColor, baseColor]
         locations = [0.0, 0.5, 1.0]
         easeFunctions = [.easeInOut, .easeInOut]
+        registerAppActiveObserverIfNeeded()
     }
 
     open override func didMoveToWindow() {
         super.didMoveToWindow()
+        updateAnimation()
+    }
+
+    private func registerAppActiveObserverIfNeeded() {
+        guard !hasRegisteredAppForegroundObserver else { return }
+        hasRegisteredAppForegroundObserver = true
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleWillEnterForegroundNotification(_:)),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
+    }
+
+    @objc private func handleWillEnterForegroundNotification(_ notification: Notification) {
         updateAnimation()
     }
 

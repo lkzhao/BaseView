@@ -29,6 +29,7 @@ private final class VisualEffectIntensityHelper: NSObject {
     private var effectAnimator: UIViewPropertyAnimator?
     private var intensity: CGFloat
     private var didRegisterTraitObserver = false
+    private var hasRegisteredAppForegroundObserver = false
 
     init(view: UIVisualEffectView, initialEffect: UIVisualEffect?, intensity: CGFloat) {
         self.view = view
@@ -36,6 +37,7 @@ private final class VisualEffectIntensityHelper: NSObject {
         self.intensity = intensity
         super.init()
         registerTraitObserverIfNeeded()
+        registerAppActiveObserverIfNeeded()
         setTargetEffect(initialEffect)
     }
 
@@ -100,6 +102,33 @@ private final class VisualEffectIntensityHelper: NSObject {
                 helper.setTargetEffect(targetEffect)
             }
         }
+    }
+
+    private func registerAppActiveObserverIfNeeded() {
+        guard !hasRegisteredAppForegroundObserver else { return }
+        hasRegisteredAppForegroundObserver = true
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillEnterForegroundNotification(_:)),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
+    }
+
+    @objc nonisolated private func appWillEnterForegroundNotification(_ notification: Notification) {
+        Task { @MainActor [weak self] in
+            self?.appWillEnterForeground()
+        }
+    }
+
+    private func appWillEnterForeground() {
+        guard let view, view.window != nil else { return }
+        guard let targetEffect else {
+            view.bv_setEffectSwizzled(nil)
+            return
+        }
+        setTargetEffect(targetEffect)
     }
 }
 
