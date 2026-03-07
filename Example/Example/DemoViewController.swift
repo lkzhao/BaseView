@@ -1416,6 +1416,7 @@ private final class LoupeDemoView: BaseView {
         clipsToBounds = true
         pressGesture.minimumPressDuration = 0
         addGestureRecognizer(pressGesture)
+        loupeView.zPosition = 10
         addSubview(loupeView)
     }
 
