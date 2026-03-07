@@ -115,55 +115,29 @@ private final class DemoRootView: BaseView {
 
             DemoCard(
                 title: "Glass Lava Button",
-                detail: "Pill button with animated blobs under a clear glass host.",
-                preview: HStack(spacing: 8, alignItems: .center) {
-                        Image(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(font: .boldSystemFont(ofSize: 24))).tintColor(.white)
-                        Text("Create", font: .boldSystemFont(ofSize: 24)).textColor(.white)
+                detail: "Same glass button rendered with different base and highlight pairs.",
+                preview: VStack(spacing: 16) {
+                        GlassLavaButtonExample(
+                            title: "Create",
+                            symbolName: "plus",
+                            baseColor: UIColor(red: 0.98, green: 0.62, blue: 0.02, alpha: 1.0),
+                            highlightColor: UIColor(red: 1.00, green: 0.86, blue: 0.43, alpha: 1.0)
+                        )
+                        GlassLavaButtonExample(
+                            title: "Share",
+                            symbolName: "paperplane.fill",
+                            baseColor: .systemBlue,
+                            highlightColor: .systemPurple
+                        )
+                        GlassLavaButtonExample(
+                            title: "Save",
+                            symbolName: "bookmark.fill",
+                            baseColor: .systemGreen
+                        )
                     }
-                    .inset(h: 20, v: 12)
-                    .visualEffectView()
-                    .effect(UIGlassEffect(style: .clear).with(\.isInteractive, value: true))
-                    .roundedCorner()
-                    .background {
-                        ViewComponent<LavaLampBlobFieldView>()
-                            .view()
-                            .shadowColor(UIColor(red: 0.97, green: 0.69, blue: 0.18, alpha: 0.34))
-                            .shadowOpacity(1)
-                            .shadowRadius(24)
-                            .shadowOffset(CGSize(width: 0, height: 6))
-                            .view()
-                            .shadowColor(UIColor(red: 0.97, green: 0.69, blue: 0.18, alpha: 0.7))
-                            .shadowOpacity(1)
-                            .shadowRadius(8)
-                            .shadowOffset(CGSize(width: 0, height: 6))
-                    }
+                    .inset(20)
                     .centered()
-                    .size(width: .fill, height: 188)
-                    .cornerRadius(14)
-                    .backgroundColor(.secondarySystemBackground)
-            )
-            
-            DemoCard(
-                title: "Glass Lava Button 2",
-                detail: "Pill button with animated blobs under a clear glass host.",
-                preview: HStack(spacing: 8, alignItems: .center) {
-                        Image(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(font: .boldSystemFont(ofSize: 24))).tintColor(.white)
-                        Text("Create", font: .boldSystemFont(ofSize: 24)).textColor(.white)
-                    }
-                    .inset(h: 20, v: 12)
-                    .visualEffectView()
-                    .effect(UIGlassEffect(style: .clear).with(\.isInteractive, value: true))
-                    .roundedCorner()
-                    .background {
-                        LavaBGComponent()
-                            .view()
-                            .shadowColor(UIColor(red: 0.97, green: 0.69, blue: 0.18, alpha: 0.34))
-                            .shadowOpacity(1)
-                            .shadowRadius(28)
-                            .shadowOffset(CGSize(width: 0, height: 6))
-                    }
-                    .centered()
-                    .size(width: .fill, height: 188)
+                    .size(width: .fill, height: 288)
                     .cornerRadius(14)
                     .backgroundColor(.secondarySystemBackground)
             )
@@ -244,6 +218,41 @@ private struct DemoCard<Content: Component>: ComponentBuilder {
     }
 }
 
+private struct GlassLavaButtonExample: ComponentBuilder {
+    let title: String
+    let symbolName: String
+    let baseColor: UIColor
+    let highlightColor: UIColor?
+
+    init(title: String, symbolName: String, baseColor: UIColor, highlightColor: UIColor? = nil) {
+        self.title = title
+        self.symbolName = symbolName
+        self.baseColor = baseColor
+        self.highlightColor = highlightColor
+    }
+
+    func build() -> some Component {
+        HStack(spacing: 8, alignItems: .center) {
+            Image(
+                systemName: symbolName,
+                withConfiguration: UIImage.SymbolConfiguration(font: .boldSystemFont(ofSize: 22))
+            )
+            .tintColor(.white)
+            Text(title, font: .boldSystemFont(ofSize: 22))
+                .textColor(.white)
+        }
+        .inset(h: 20, v: 12)
+        .visualEffectView()
+        .effect(UIGlassEffect(style: .clear).with(\.isInteractive, value: true))
+        .roundedCorner()
+        .background {
+            ViewComponent<LavaLampBlobFieldView>()
+                .with(\.baseColor, baseColor)
+                .with(\.highlightColor, highlightColor)
+        }
+    }
+}
+
 private final class LavaLampBlobFieldView: BaseView {
     private struct BlobOrbitConfiguration {
         let size: CGSize
@@ -257,10 +266,23 @@ private final class LavaLampBlobFieldView: BaseView {
         let delay: CFTimeInterval
     }
 
+    private let outerShadowView = UIView()
+    private let innerShadowView = UIView()
+    private let clippedContentView = UIView()
     private let baseGradientView = GradientView()
+    var baseColor: UIColor = UIColor(red: 0.98, green: 0.62, blue: 0.02, alpha: 1.0) {
+        didSet {
+            updateDerivedColors()
+        }
+    }
+    var highlightColor: UIColor? = nil {
+        didSet {
+            updateDerivedColors()
+        }
+    }
     private let blobConfigurations: [BlobOrbitConfiguration] = [
         BlobOrbitConfiguration(
-            size: CGSize(width: 0.62, height: 1.38),
+            size: CGSize(width: 0.72, height: 2.38),
             orbitCenter: CGPoint(x: 0.42, y: 0.48),
             orbitRadiusMultiplier: 0.18,
             startAngle: -.pi * 0.12,
@@ -271,7 +293,7 @@ private final class LavaLampBlobFieldView: BaseView {
             delay: 0
         ),
         BlobOrbitConfiguration(
-            size: CGSize(width: 0.72, height: 1.62),
+            size: CGSize(width: 0.72, height: 2.62),
             orbitCenter: CGPoint(x: 0.60, y: 0.42),
             orbitRadiusMultiplier: 0.24,
             startAngle: -.pi * 0.62,
@@ -282,19 +304,19 @@ private final class LavaLampBlobFieldView: BaseView {
             delay: 0.5
         ),
         BlobOrbitConfiguration(
-            size: CGSize(width: 0.58, height: 1.32),
+            size: CGSize(width: 0.78, height: 2.0),
             orbitCenter: CGPoint(x: 0.0, y: 0.62),
             orbitRadiusMultiplier: 0.5,
             startAngle: .pi * 0.22,
             clockwise: true,
             scaleValues: [1.0, 1.12, 0.96, 1.1, 1.0],
             opacityValues: [0.88, 0.98, 0.84, 0.94, 0.88],
-            duration: 10.5,
+            duration: 6.5,
             delay: 0.8
         ),
         BlobOrbitConfiguration(
-            size: CGSize(width: 0.60, height: 1.3),
-            orbitCenter: CGPoint(x: 0.40, y: 0.58),
+            size: CGSize(width: 0.70, height: 2.7),
+            orbitCenter: CGPoint(x: 0.80, y: 0.58),
             orbitRadiusMultiplier: 0.38,
             startAngle: .pi * 0.72,
             clockwise: true,
@@ -304,33 +326,42 @@ private final class LavaLampBlobFieldView: BaseView {
             delay: 0.25
         ),
     ]
-    private let blobs = [
-        LavaLampBlobView(color: UIColor(red: 1.00, green: 0.60, blue: 0.00, alpha: 1.0)),
-        LavaLampBlobView(color: UIColor(red: 0.98, green: 0.62, blue: 0.02, alpha: 1.0)),
-        LavaLampBlobView(color: UIColor(red: 1.00, green: 0.77, blue: 0.20, alpha: 1.0)),
-        LavaLampBlobView(color: UIColor(red: 1.00, green: 0.86, blue: 0.43, alpha: 1.0))
-    ]
+    private lazy var blobs: [LavaLampBlobView] = (0..<4).map { _ in
+        LavaLampBlobView(color: baseColor)
+    }
     private var hasStartedAnimations = false
     private var animationBoundsSize: CGSize = .zero
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        clipsToBounds = true
+        backgroundColor = .clear
 
-        baseGradientView.colors = [
-            UIColor(red: 0.98, green: 0.82, blue: 0.29, alpha: 1.0),
-            UIColor(red: 0.98, green: 0.62, blue: 0.02, alpha: 1.0),
-            UIColor(red: 0.98, green: 0.79, blue: 0.31, alpha: 1.0)
-        ]
+        outerShadowView.backgroundColor = .clear
+        outerShadowView.shadowOpacity = 1
+        outerShadowView.shadowRadius = 24
+        outerShadowView.shadowOffset = CGSize(width: 0, height: 6)
+        addSubview(outerShadowView)
+
+        innerShadowView.backgroundColor = .clear
+        innerShadowView.shadowOpacity = 1
+        innerShadowView.shadowRadius = 8
+        innerShadowView.shadowOffset = CGSize(width: 0, height: 6)
+        outerShadowView.addSubview(innerShadowView)
+
+        clippedContentView.clipsToBounds = true
+        innerShadowView.addSubview(clippedContentView)
+
         baseGradientView.locations = [0, 0.5, 1]
         baseGradientView.startPoint = CGPoint(x: 0, y: 0.5)
         baseGradientView.endPoint = CGPoint(x: 1, y: 0.5)
-        addSubview(baseGradientView)
+        clippedContentView.addSubview(baseGradientView)
 
         for blob in blobs {
-            addSubview(blob)
+            clippedContentView.addSubview(blob)
         }
+
+        updateDerivedColors()
     }
 
     override func didMoveToWindow() {
@@ -341,8 +372,20 @@ private final class LavaLampBlobFieldView: BaseView {
     override func layoutSubviews() {
         super.layoutSubviews()
 
-        cornerRadius = bounds.height / 2
-        baseGradientView.frameWithoutTransform = bounds
+        let radius = bounds.height / 2
+        outerShadowView.frameWithoutTransform = bounds
+        innerShadowView.frameWithoutTransform = outerShadowView.bounds
+        clippedContentView.frameWithoutTransform = innerShadowView.bounds
+
+        outerShadowView.cornerRadius = radius
+        innerShadowView.cornerRadius = radius
+        clippedContentView.cornerRadius = radius
+
+        let shadowPath = UIBezierPath(roundedRect: outerShadowView.bounds, cornerRadius: radius).cgPath
+        outerShadowView.layer.shadowPath = shadowPath
+        innerShadowView.layer.shadowPath = shadowPath
+
+        baseGradientView.frameWithoutTransform = clippedContentView.bounds
 
         if animationBoundsSize != bounds.size {
             animationBoundsSize = bounds.size
@@ -354,12 +397,12 @@ private final class LavaLampBlobFieldView: BaseView {
 
         for (blob, configuration) in zip(blobs, blobConfigurations) {
             let size = CGSize(
-                width: bounds.width * configuration.size.width,
-                height: bounds.height * configuration.size.height
+                width: clippedContentView.bounds.width * configuration.size.width,
+                height: clippedContentView.bounds.height * configuration.size.height
             )
             let origin = pointOnOrbit(
                 around: resolvedOrbitCenter(for: configuration),
-                radius: bounds.width * configuration.orbitRadiusMultiplier,
+                radius: clippedContentView.bounds.width * configuration.orbitRadiusMultiplier,
                 angle: configuration.startAngle
             )
             blob.frameWithoutTransform = CGRect(center: origin, size: size)
@@ -376,7 +419,7 @@ private final class LavaLampBlobFieldView: BaseView {
             animate(
                 blob,
                 orbitCenter: resolvedOrbitCenter(for: configuration),
-                orbitRadius: bounds.width * configuration.orbitRadiusMultiplier,
+                orbitRadius: clippedContentView.bounds.width * configuration.orbitRadiusMultiplier,
                 startAngle: configuration.startAngle,
                 clockwise: configuration.clockwise,
                 scaleValues: configuration.scaleValues,
@@ -441,8 +484,119 @@ private final class LavaLampBlobFieldView: BaseView {
 
     private func resolvedOrbitCenter(for configuration: BlobOrbitConfiguration) -> CGPoint {
         CGPoint(
-            x: bounds.width * configuration.orbitCenter.x,
-            y: bounds.height * configuration.orbitCenter.y
+            x: clippedContentView.bounds.width * configuration.orbitCenter.x,
+            y: clippedContentView.bounds.height * configuration.orbitCenter.y
+        )
+    }
+
+    private func updateDerivedColors() {
+        let base = baseColor
+        let highlight = highlightColor ?? derivedHighlightColor(from: base)
+        let molten = adjustedColor(
+            base.dynamicMixWithColor(highlight, amount: 0.16),
+            saturationMultiplier: 1.06,
+            brightnessMultiplier: 0.98
+        )
+        let warm = adjustedColor(
+            base.dynamicMixWithColor(highlight, amount: 0.38),
+            saturationMultiplier: 1.0,
+            brightnessMultiplier: 1.02
+        )
+        let glow = adjustedColor(
+            base.dynamicMixWithColor(highlight, amount: 0.68),
+            saturationMultiplier: 0.9,
+            brightnessMultiplier: 1.08
+        )
+        let pale = adjustedColor(
+            base.dynamicMixWithColor(highlight, amount: 0.92),
+            saturationMultiplier: 0.76,
+            brightnessMultiplier: 1.16
+        )
+
+        outerShadowView.shadowColor = adjustedColor(
+            base.dynamicMixWithColor(highlight, amount: 0.2),
+            saturationMultiplier: 0.96,
+            brightnessMultiplier: 1.02,
+            alpha: 0.34
+        )
+        innerShadowView.shadowColor = adjustedColor(
+            base.dynamicMixWithColor(highlight, amount: 0.28),
+            saturationMultiplier: 0.98,
+            brightnessMultiplier: 1.04,
+            alpha: 0.7
+        )
+
+        baseGradientView.colors = [
+            pale,
+            base,
+            glow
+        ]
+
+        blobs[0].blobColor = molten
+        blobs[1].blobColor = base
+        blobs[2].blobColor = warm
+        blobs[3].blobColor = glow
+    }
+
+    private func derivedHighlightColor(from baseColor: UIColor) -> UIColor {
+        adjustedColor(
+            baseColor.dynamicMixWithColor(.white, amount: 0.4),
+            saturationMultiplier: 0.82,
+            brightnessMultiplier: 1.04
+        )
+    }
+
+    private func adjustedColor(
+        _ color: UIColor,
+        hueOffset: CGFloat = 0,
+        saturationMultiplier: CGFloat = 1,
+        brightnessMultiplier: CGFloat = 1,
+        alpha: CGFloat? = nil
+    ) -> UIColor {
+        UIColor(
+            dark: adjustedResolvedColor(
+                color.darkMode,
+                hueOffset: hueOffset,
+                saturationMultiplier: saturationMultiplier,
+                brightnessMultiplier: brightnessMultiplier,
+                alpha: alpha
+            ),
+            light: adjustedResolvedColor(
+                color.lightMode,
+                hueOffset: hueOffset,
+                saturationMultiplier: saturationMultiplier,
+                brightnessMultiplier: brightnessMultiplier,
+                alpha: alpha
+            )
+        )
+    }
+
+    private func adjustedResolvedColor(
+        _ color: UIColor,
+        hueOffset: CGFloat = 0,
+        saturationMultiplier: CGFloat = 1,
+        brightnessMultiplier: CGFloat = 1,
+        alpha: CGFloat? = nil
+    ) -> UIColor {
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var resolvedAlpha: CGFloat = 0
+
+        guard color.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &resolvedAlpha) else {
+            return color.withAlphaComponent(alpha ?? resolvedAlpha)
+        }
+
+        var wrappedHue = (hue + hueOffset).truncatingRemainder(dividingBy: 1)
+        if wrappedHue < 0 {
+            wrappedHue += 1
+        }
+
+        return UIColor(
+            hue: wrappedHue,
+            saturation: max(0, min(1, saturation * saturationMultiplier)),
+            brightness: max(0, min(1, brightness * brightnessMultiplier)),
+            alpha: alpha ?? resolvedAlpha
         )
     }
 }
