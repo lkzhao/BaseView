@@ -129,7 +129,12 @@ private final class DemoRootView: BaseView {
                             .view()
                             .shadowColor(UIColor(red: 0.97, green: 0.69, blue: 0.18, alpha: 0.34))
                             .shadowOpacity(1)
-                            .shadowRadius(28)
+                            .shadowRadius(24)
+                            .shadowOffset(CGSize(width: 0, height: 6))
+                            .view()
+                            .shadowColor(UIColor(red: 0.97, green: 0.69, blue: 0.18, alpha: 0.7))
+                            .shadowOpacity(1)
+                            .shadowRadius(8)
                             .shadowOffset(CGSize(width: 0, height: 6))
                     }
                     .centered()
@@ -242,6 +247,7 @@ private struct DemoCard<Content: Component>: ComponentBuilder {
 private final class LavaLampBlobFieldView: BaseView {
     private struct BlobOrbitConfiguration {
         let size: CGSize
+        let orbitCenter: CGPoint
         let orbitRadiusMultiplier: CGFloat
         let startAngle: CGFloat
         let clockwise: Bool
@@ -255,6 +261,7 @@ private final class LavaLampBlobFieldView: BaseView {
     private let blobConfigurations: [BlobOrbitConfiguration] = [
         BlobOrbitConfiguration(
             size: CGSize(width: 0.62, height: 1.38),
+            orbitCenter: CGPoint(x: 0.42, y: 0.48),
             orbitRadiusMultiplier: 0.18,
             startAngle: -.pi * 0.12,
             clockwise: true,
@@ -265,6 +272,7 @@ private final class LavaLampBlobFieldView: BaseView {
         ),
         BlobOrbitConfiguration(
             size: CGSize(width: 0.72, height: 1.62),
+            orbitCenter: CGPoint(x: 0.60, y: 0.42),
             orbitRadiusMultiplier: 0.24,
             startAngle: -.pi * 0.62,
             clockwise: false,
@@ -275,16 +283,18 @@ private final class LavaLampBlobFieldView: BaseView {
         ),
         BlobOrbitConfiguration(
             size: CGSize(width: 0.58, height: 1.32),
-            orbitRadiusMultiplier: 0.36,
+            orbitCenter: CGPoint(x: 0.0, y: 0.62),
+            orbitRadiusMultiplier: 0.5,
             startAngle: .pi * 0.22,
             clockwise: true,
             scaleValues: [1.0, 1.12, 0.96, 1.1, 1.0],
             opacityValues: [0.88, 0.98, 0.84, 0.94, 0.88],
-            duration: 5.5,
+            duration: 10.5,
             delay: 0.8
         ),
         BlobOrbitConfiguration(
             size: CGSize(width: 0.60, height: 1.3),
+            orbitCenter: CGPoint(x: 0.40, y: 0.58),
             orbitRadiusMultiplier: 0.38,
             startAngle: .pi * 0.72,
             clockwise: true,
@@ -292,7 +302,7 @@ private final class LavaLampBlobFieldView: BaseView {
             opacityValues: [0.86, 0.96, 0.82, 0.9, 0.86],
             duration: 8.6,
             delay: 0.25
-        )
+        ),
     ]
     private let blobs = [
         LavaLampBlobView(color: UIColor(red: 1.00, green: 0.60, blue: 0.00, alpha: 1.0)),
@@ -342,14 +352,13 @@ private final class LavaLampBlobFieldView: BaseView {
             }
         }
 
-        let orbitCenter = CGPoint(x: bounds.midX, y: bounds.midY)
         for (blob, configuration) in zip(blobs, blobConfigurations) {
             let size = CGSize(
                 width: bounds.width * configuration.size.width,
                 height: bounds.height * configuration.size.height
             )
             let origin = pointOnOrbit(
-                around: orbitCenter,
+                around: resolvedOrbitCenter(for: configuration),
                 radius: bounds.width * configuration.orbitRadiusMultiplier,
                 angle: configuration.startAngle
             )
@@ -362,12 +371,11 @@ private final class LavaLampBlobFieldView: BaseView {
     private func startAnimationsIfNeeded() {
         guard window != nil, bounds.width > 0, bounds.height > 0, !hasStartedAnimations else { return }
         hasStartedAnimations = true
-        let orbitCenter = CGPoint(x: bounds.midX, y: bounds.midY)
 
         for (blob, configuration) in zip(blobs, blobConfigurations) {
             animate(
                 blob,
-                orbitCenter: orbitCenter,
+                orbitCenter: resolvedOrbitCenter(for: configuration),
                 orbitRadius: bounds.width * configuration.orbitRadiusMultiplier,
                 startAngle: configuration.startAngle,
                 clockwise: configuration.clockwise,
@@ -428,6 +436,13 @@ private final class LavaLampBlobFieldView: BaseView {
         CGPoint(
             x: center.x + cos(angle) * radius,
             y: center.y + sin(angle) * radius
+        )
+    }
+
+    private func resolvedOrbitCenter(for configuration: BlobOrbitConfiguration) -> CGPoint {
+        CGPoint(
+            x: bounds.width * configuration.orbitCenter.x,
+            y: bounds.height * configuration.orbitCenter.y
         )
     }
 }
@@ -1628,6 +1643,7 @@ private final class PortalPairDemoView: BaseView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        bringSubviewToFront(portalPairView)
         applyProgress()
     }
 
