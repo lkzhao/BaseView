@@ -114,6 +114,56 @@ private final class DemoRootView: BaseView {
             )
 
             DemoCard(
+                title: "Glass Lava Button",
+                detail: "Pill button with animated blobs under a clear glass host.",
+                preview: HStack(spacing: 8, alignItems: .center) {
+                        Image(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(font: .boldSystemFont(ofSize: 24))).tintColor(.white)
+                        Text("Create", font: .boldSystemFont(ofSize: 24)).textColor(.white)
+                    }
+                    .inset(h: 20, v: 12)
+                    .visualEffectView()
+                    .effect(UIGlassEffect(style: .clear).with(\.isInteractive, value: true))
+                    .roundedCorner()
+                    .background {
+                        ViewComponent<LavaLampBlobFieldView>()
+                            .view()
+                            .shadowColor(UIColor(red: 0.97, green: 0.69, blue: 0.18, alpha: 0.34))
+                            .shadowOpacity(1)
+                            .shadowRadius(28)
+                            .shadowOffset(CGSize(width: 0, height: 6))
+                    }
+                    .centered()
+                    .size(width: .fill, height: 188)
+                    .cornerRadius(14)
+                    .backgroundColor(.secondarySystemBackground)
+            )
+            
+            DemoCard(
+                title: "Glass Lava Button 2",
+                detail: "Pill button with animated blobs under a clear glass host.",
+                preview: HStack(spacing: 8, alignItems: .center) {
+                        Image(systemName: "plus", withConfiguration: UIImage.SymbolConfiguration(font: .boldSystemFont(ofSize: 24))).tintColor(.white)
+                        Text("Create", font: .boldSystemFont(ofSize: 24)).textColor(.white)
+                    }
+                    .inset(h: 20, v: 12)
+                    .visualEffectView()
+                    .effect(UIGlassEffect(style: .clear).with(\.isInteractive, value: true))
+                    .roundedCorner()
+                    .background {
+                        LavaBGComponent()
+                            .view()
+                            .shadowColor(UIColor(red: 0.97, green: 0.69, blue: 0.18, alpha: 0.34))
+                            .shadowOpacity(1)
+                            .shadowRadius(28)
+                            .shadowOffset(CGSize(width: 0, height: 6))
+                    }
+                    .centered()
+                    .size(width: .fill, height: 188)
+                    .cornerRadius(14)
+                    .backgroundColor(.secondarySystemBackground)
+            )
+
+            DemoCard(
                 title: "BackdropView",
                 detail: "Private CABackdropLayer wrapper with a blur overlay on top of BackgroundCirclesView.",
                 preview: ViewComponent<BackdropDemoView>()
@@ -184,7 +234,237 @@ private struct DemoCard<Content: Component>: ComponentBuilder {
                 Text(detail, font: .systemFont(ofSize: 14))
                     .textColor(.secondaryLabel)
             }
+            preview
         }
+    }
+}
+
+private final class LavaLampBlobFieldView: BaseView {
+    private struct BlobOrbitConfiguration {
+        let size: CGSize
+        let orbitRadiusMultiplier: CGFloat
+        let startAngle: CGFloat
+        let clockwise: Bool
+        let scaleValues: [CGFloat]
+        let opacityValues: [CGFloat]
+        let duration: CFTimeInterval
+        let delay: CFTimeInterval
+    }
+
+    private let baseGradientView = GradientView()
+    private let blobConfigurations: [BlobOrbitConfiguration] = [
+        BlobOrbitConfiguration(
+            size: CGSize(width: 0.62, height: 1.38),
+            orbitRadiusMultiplier: 0.18,
+            startAngle: -.pi * 0.12,
+            clockwise: true,
+            scaleValues: [1.0, 1.18, 0.94, 1.08, 1.0],
+            opacityValues: [0.92, 1.0, 0.86, 0.98, 0.92],
+            duration: 5.1,
+            delay: 0
+        ),
+        BlobOrbitConfiguration(
+            size: CGSize(width: 0.72, height: 1.62),
+            orbitRadiusMultiplier: 0.24,
+            startAngle: -.pi * 0.62,
+            clockwise: false,
+            scaleValues: [1.0, 0.95, 1.16, 1.02, 1.0],
+            opacityValues: [0.94, 0.88, 1.0, 0.92, 0.94],
+            duration: 5.9,
+            delay: 0.5
+        ),
+        BlobOrbitConfiguration(
+            size: CGSize(width: 0.58, height: 1.32),
+            orbitRadiusMultiplier: 0.36,
+            startAngle: .pi * 0.22,
+            clockwise: true,
+            scaleValues: [1.0, 1.12, 0.96, 1.1, 1.0],
+            opacityValues: [0.88, 0.98, 0.84, 0.94, 0.88],
+            duration: 5.5,
+            delay: 0.8
+        ),
+        BlobOrbitConfiguration(
+            size: CGSize(width: 0.60, height: 1.3),
+            orbitRadiusMultiplier: 0.38,
+            startAngle: .pi * 0.72,
+            clockwise: true,
+            scaleValues: [1.0, 1.14, 0.9, 1.05, 1.0],
+            opacityValues: [0.86, 0.96, 0.82, 0.9, 0.86],
+            duration: 8.6,
+            delay: 0.25
+        )
+    ]
+    private let blobs = [
+        LavaLampBlobView(color: UIColor(red: 1.00, green: 0.60, blue: 0.00, alpha: 1.0)),
+        LavaLampBlobView(color: UIColor(red: 0.98, green: 0.62, blue: 0.02, alpha: 1.0)),
+        LavaLampBlobView(color: UIColor(red: 1.00, green: 0.77, blue: 0.20, alpha: 1.0)),
+        LavaLampBlobView(color: UIColor(red: 1.00, green: 0.86, blue: 0.43, alpha: 1.0))
+    ]
+    private var hasStartedAnimations = false
+    private var animationBoundsSize: CGSize = .zero
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        clipsToBounds = true
+
+        baseGradientView.colors = [
+            UIColor(red: 0.98, green: 0.82, blue: 0.29, alpha: 1.0),
+            UIColor(red: 0.98, green: 0.62, blue: 0.02, alpha: 1.0),
+            UIColor(red: 0.98, green: 0.79, blue: 0.31, alpha: 1.0)
+        ]
+        baseGradientView.locations = [0, 0.5, 1]
+        baseGradientView.startPoint = CGPoint(x: 0, y: 0.5)
+        baseGradientView.endPoint = CGPoint(x: 1, y: 0.5)
+        addSubview(baseGradientView)
+
+        for blob in blobs {
+            addSubview(blob)
+        }
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        startAnimationsIfNeeded()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        cornerRadius = bounds.height / 2
+        baseGradientView.frameWithoutTransform = bounds
+
+        if animationBoundsSize != bounds.size {
+            animationBoundsSize = bounds.size
+            hasStartedAnimations = false
+            for blob in blobs {
+                blob.layer.removeAnimation(forKey: "lavaLamp")
+            }
+        }
+
+        let orbitCenter = CGPoint(x: bounds.midX, y: bounds.midY)
+        for (blob, configuration) in zip(blobs, blobConfigurations) {
+            let size = CGSize(
+                width: bounds.width * configuration.size.width,
+                height: bounds.height * configuration.size.height
+            )
+            let origin = pointOnOrbit(
+                around: orbitCenter,
+                radius: bounds.width * configuration.orbitRadiusMultiplier,
+                angle: configuration.startAngle
+            )
+            blob.frameWithoutTransform = CGRect(center: origin, size: size)
+        }
+
+        startAnimationsIfNeeded()
+    }
+
+    private func startAnimationsIfNeeded() {
+        guard window != nil, bounds.width > 0, bounds.height > 0, !hasStartedAnimations else { return }
+        hasStartedAnimations = true
+        let orbitCenter = CGPoint(x: bounds.midX, y: bounds.midY)
+
+        for (blob, configuration) in zip(blobs, blobConfigurations) {
+            animate(
+                blob,
+                orbitCenter: orbitCenter,
+                orbitRadius: bounds.width * configuration.orbitRadiusMultiplier,
+                startAngle: configuration.startAngle,
+                clockwise: configuration.clockwise,
+                scaleValues: configuration.scaleValues,
+                opacityValues: configuration.opacityValues,
+                duration: configuration.duration,
+                delay: configuration.delay
+            )
+        }
+    }
+
+    private func animate(
+        _ view: UIView,
+        orbitCenter: CGPoint,
+        orbitRadius: CGFloat,
+        startAngle: CGFloat,
+        clockwise: Bool,
+        scaleValues: [CGFloat],
+        opacityValues: [CGFloat],
+        duration: CFTimeInterval,
+        delay: CFTimeInterval
+    ) {
+        let keyTimes: [NSNumber] = [0, 0.26, 0.58, 0.82, 1]
+        let timingFunctions = Array(repeating: CAMediaTimingFunction(name: .easeInEaseOut), count: keyTimes.count - 1)
+
+        let orbit = CAKeyframeAnimation(keyPath: "position")
+        orbit.path = UIBezierPath(
+            arcCenter: orbitCenter,
+            radius: orbitRadius,
+            startAngle: startAngle,
+            endAngle: startAngle + (clockwise ? CGFloat.pi * 2 : -CGFloat.pi * 2),
+            clockwise: clockwise
+        ).cgPath
+        orbit.calculationMode = .paced
+        orbit.timingFunction = CAMediaTimingFunction(name: .linear)
+
+        let scale = CAKeyframeAnimation(keyPath: "transform.scale")
+        scale.values = scaleValues
+        scale.keyTimes = keyTimes
+        scale.timingFunctions = timingFunctions
+
+        let opacity = CAKeyframeAnimation(keyPath: "opacity")
+        opacity.values = opacityValues
+        opacity.keyTimes = keyTimes
+        opacity.timingFunctions = timingFunctions
+
+        let animationGroup = CAAnimationGroup()
+        animationGroup.animations = [orbit, scale, opacity]
+        animationGroup.duration = duration
+        animationGroup.repeatCount = .infinity
+        animationGroup.beginTime = CACurrentMediaTime() + delay
+        animationGroup.isRemovedOnCompletion = false
+
+        view.layer.add(animationGroup, forKey: "lavaLamp")
+    }
+
+    private func pointOnOrbit(around center: CGPoint, radius: CGFloat, angle: CGFloat) -> CGPoint {
+        CGPoint(
+            x: center.x + cos(angle) * radius,
+            y: center.y + sin(angle) * radius
+        )
+    }
+}
+
+private final class LavaLampBlobView: GradientView {
+    var blobColor: UIColor {
+        didSet {
+            applyBlobColor()
+        }
+    }
+
+    init(color: UIColor) {
+        blobColor = color
+        super.init(frame: .zero)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        isUserInteractionEnabled = false
+        gradientLayer.type = .radial
+        startPoint = CGPoint(x: 0.5, y: 0.5)
+        endPoint = CGPoint(x: 1.0, y: 1.0)
+        locations = [0, 1]
+        easeFunctions = [.easeInOut]
+        applyBlobColor()
+    }
+
+    private func applyBlobColor() {
+        colors = [
+            blobColor,
+            blobColor.withAlphaComponent(0)
+        ]
     }
 }
 
