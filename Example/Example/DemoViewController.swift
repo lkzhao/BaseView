@@ -114,6 +114,20 @@ private final class DemoRootView: BaseView {
             )
 
             DemoCard(
+                title: "BackdropView",
+                detail: "Private CABackdropLayer wrapper with a blur overlay on top of BackgroundCirclesView.",
+                preview: ViewComponent<BackdropDemoView>()
+                    .size(width: .fill, height: 160)
+            )
+
+            DemoCard(
+                title: "Backdrop Filter Study",
+                detail: "Visualize the private filter stack pieces used by the active floating tab bar.",
+                preview: ViewComponent<BackdropFilterStudyView>()
+                    .measureSize(key: "backdrop")
+            )
+
+            DemoCard(
                 title: "LensView",
                 detail: "A clear lens that lifts on press.",
                 preview: ViewComponent<LensDemoView>()
@@ -170,7 +184,6 @@ private struct DemoCard<Content: Component>: ComponentBuilder {
                 Text(detail, font: .systemFont(ofSize: 14))
                     .textColor(.secondaryLabel)
             }
-            preview
         }
     }
 }
@@ -323,6 +336,717 @@ private final class VisualEffectBackdropView: BaseView {
                 .size(width: 200, height: .fill)
                 .cornerRadius(20)
                 .inset(20)
+        }
+    }
+}
+
+private final class BackdropDemoView: BaseView {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        backgroundColor = UIColor(red: 0.18, green: 0.22, blue: 0.42, alpha: 1.0)
+        cornerRadius = 16
+        clipsToBounds = true
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+        componentEngine.component = ZStack {
+            ViewComponent<BackgroundCirclesView>().fill()
+
+            ZStack {
+                ViewComponent<BackdropView>()
+                    .blurRadius(28)
+                    .backdropScale(0.5)
+                    .allowsInPlaceFiltering(true)
+                    .bleedAmount(0.12)
+                    .fill()
+
+                VStack(spacing: 4, alignItems: .center) {
+                    Text("BackdropView", font: .boldSystemFont(ofSize: 20))
+                        .textColor(UIColor.white.withAlphaComponent(0.96))
+
+                    Text("CABackdropLayer + gaussianBlur", font: .systemFont(ofSize: 12, weight: .semibold))
+                        .textColor(UIColor.white.withAlphaComponent(0.8))
+                }
+            }
+            .backgroundColor(UIColor.white.withAlphaComponent(0.14))
+            .cornerRadius(24)
+            .size(width: 228, height: 92)
+            .inset(20)
+        }
+    }
+}
+
+private struct BackdropFilterStudyRow<Preview: Component>: ComponentBuilder {
+    let title: String
+    let detail: String
+    let preview: Preview
+
+    func build() -> some Component {
+        VStack(spacing: 6) {
+            VStack(spacing: 2) {
+                Text(title, font: .systemFont(ofSize: 13, weight: .semibold))
+                    .textColor(.label)
+
+                Text(detail, font: .systemFont(ofSize: 11))
+                    .textColor(.secondaryLabel)
+            }
+
+            preview
+        }
+    }
+}
+
+private final class BackdropFilterStudyView: BaseView {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        backgroundColor = .secondarySystemBackground
+        cornerRadius = 16
+        clipsToBounds = true
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+        componentEngine.component = VStack(spacing: 12) {
+            BackdropFilterStudyRow(
+                title: "gaussianBlur",
+                detail: "The actual tab pill uses radius 2 on its CABackdropLayer. Larger radii show the capture stage clearly.",
+                preview: ViewComponent<BackdropFilterPreviewView>()
+                    .update { $0.recipe = .blurOnly }
+                    .size(width: .fill, height: 108)
+            )
+
+            BackdropFilterStudyRow(
+                title: "gaussianBlur + colorMatrix",
+                detail: "Blur first, then remap sampled colors with a 20-value RGBA matrix. The private filter expects `[NSNumber]`, not raw bytes.",
+                preview: ViewComponent<BackdropFilterPreviewView>()
+                    .update { $0.recipe = .tabSelection }
+                    .size(width: .fill, height: 108)
+            )
+
+            BackdropFilterStudyRow(
+                title: "Hard Invert Matrix",
+                detail: "A plain 4x5 invert matrix makes the remap obvious. This is stronger than UIKit's tuned matrix but easier to reason about.",
+                preview: ViewComponent<BackdropFilterPreviewView>()
+                    .update { $0.recipe = .hardInvert }
+                    .size(width: .fill, height: 108)
+            )
+
+            BackdropFilterStudyRow(
+                title: "vibrantColorMatrix on Foreground",
+                detail: "UIKit applies a second matrix to icon and label layers. This sample leaves the backdrop mild and remaps the foreground instead.",
+                preview: ViewComponent<BackdropFilterPreviewView>()
+                    .update { $0.recipe = .vibrantForeground }
+                    .size(width: .fill, height: 108)
+            )
+
+            BackdropFilterStudyRow(
+                title: "opacityPair",
+                detail: "This uses `inputAmount` to rebalance two translucent passes. A side-by-side comparison makes the paired alpha response much easier to spot.",
+                preview: ViewComponent<OpacityPairPreviewView>()
+                    .size(width: .fill, height: 124)
+            )
+
+            BackdropFilterStudyRow(
+                title: "displacementMap",
+                detail: "The raw filter takes `inputAmount`, but UIKit's visible glass warp comes from a private clear-glass host supplying the displacement field.",
+                preview: ViewComponent<DisplacementMapPreviewView>()
+                    .size(width: .fill, height: 132)
+            )
+        }
+        .inset(12)
+        .fill()
+    }
+}
+
+private enum BackdropFilterRecipe {
+    case blurOnly
+    case tabSelection
+    case hardInvert
+    case vibrantForeground
+
+    var title: String {
+        switch self {
+        case .blurOnly:
+            "Blur Only"
+        case .tabSelection:
+            "Tab-style Matrix"
+        case .hardInvert:
+            "Invert Matrix"
+        case .vibrantForeground:
+            "Vibrant Foreground"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .blurOnly:
+            "gaussianBlur(radius: 18)"
+        case .tabSelection:
+            "blur 2 + tab lift matrix"
+        case .hardInvert:
+            "blur 2 + invert matrix"
+        case .vibrantForeground:
+            "foreground vibrantColorMatrix"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .blurOnly:
+            "drop.fill"
+        case .tabSelection:
+            "circle.lefthalf.filled"
+        case .hardInvert:
+            "circle.righthalf.filled.inverse"
+        case .vibrantForeground:
+            "sparkles"
+        }
+    }
+
+    var tintAlpha: CGFloat {
+        switch self {
+        case .blurOnly:
+            0.12
+        case .tabSelection:
+            0.18
+        case .hardInvert:
+            0.08
+        case .vibrantForeground:
+            0.16
+        }
+    }
+
+    var contentColor: UIColor {
+        switch self {
+        case .hardInvert:
+            UIColor.black.withAlphaComponent(0.92)
+        case .vibrantForeground:
+            UIColor(red: 1.0, green: 0.97, blue: 0.88, alpha: 1.0)
+        default:
+            UIColor.white.withAlphaComponent(0.96)
+        }
+    }
+
+    func makeBackdropFilters() -> [Any] {
+        switch self {
+        case .blurOnly:
+            return [
+                BackdropView.makeGaussianBlurFilter(radius: 18, normalizeEdges: true)
+            ].compactMap { $0 }
+
+        case .tabSelection:
+            return [
+                BackdropView.makeGaussianBlurFilter(radius: 2, normalizeEdges: true),
+                BackdropView.makeColorMatrixFilter(matrix: BackdropFilterMatrices.tabSelectionBackdrop)
+            ].compactMap { $0 }
+
+        case .hardInvert:
+            return [
+                BackdropView.makeGaussianBlurFilter(radius: 2, normalizeEdges: true),
+                BackdropView.makeColorMatrixFilter(matrix: BackdropFilterMatrices.invert)
+            ].compactMap { $0 }
+
+        case .vibrantForeground:
+            return [
+                BackdropView.makeGaussianBlurFilter(radius: 8, normalizeEdges: true),
+                BackdropView.makeColorMatrixFilter(matrix: BackdropFilterMatrices.softLift)
+            ].compactMap { $0 }
+        }
+    }
+
+    func makeForegroundFilters() -> [Any] {
+        switch self {
+        case .vibrantForeground:
+            return [
+                BackdropView.makeVibrantColorMatrixFilter(matrix: BackdropFilterMatrices.foregroundVibrant)
+            ].compactMap { $0 }
+
+        default:
+            return []
+        }
+    }
+}
+
+private enum BackdropFilterMatrices {
+    static let softLift: [Float] = [
+        1.18, -0.05, -0.01, 0.00, 0.06,
+        -0.03, 1.14, -0.03, 0.00, 0.08,
+        -0.02, -0.06, 1.20, 0.00, 0.10,
+        0.00, 0.00, 0.00, 1.00, 0.00
+    ]
+
+    // Approximates the live tab-bar backdrop pass: a small blur plus a lifted color remap.
+    static let tabSelectionBackdrop: [Float] = [
+        1.18, -0.05, -0.01, 0.00, 0.08,
+        -0.04, 1.15, -0.03, 0.00, 0.10,
+        -0.02, -0.06, 1.22, 0.00, 0.14,
+        0.00, 0.00, 0.00, 1.00, 0.00
+    ]
+
+    static let invert: [Float] = [
+        -1.00, 0.00, 0.00, 0.00, 1.00,
+        0.00, -1.00, 0.00, 0.00, 1.00,
+        0.00, 0.00, -1.00, 0.00, 1.00,
+        0.00, 0.00, 0.00, 1.00, 0.00
+    ]
+
+    static let foregroundVibrant: [Float] = [
+        0.50, 0.00, 0.00, 0.00, 0.30,
+        0.00, 0.50, 0.00, 0.00, 0.30,
+        0.00, 0.00, 0.50, 0.00, 0.30,
+        0.00, 0.00, 0.00, 1.00, 0.00
+    ]
+}
+
+private final class BackdropFilterPreviewView: BaseView {
+    var recipe: BackdropFilterRecipe = .blurOnly {
+        didSet {
+            setNeedsUpdateProperties()
+        }
+    }
+
+    private let circlesView = BackgroundCirclesView()
+    private let pillView = UIView()
+    private let backdropView = BackdropView()
+    private let tintView = UIView()
+    private let contentFilterView = UIView()
+    private let symbolView = UIImageView()
+    private let titleLabel = UILabel()
+    private let subtitleLabel = UILabel()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        backgroundColor = UIColor(red: 0.18, green: 0.22, blue: 0.42, alpha: 1.0)
+        cornerRadius = 16
+        clipsToBounds = true
+
+        addSubview(circlesView)
+
+        pillView.cornerRadius = 24
+        pillView.clipsToBounds = true
+        addSubview(pillView)
+
+        pillView.addSubview(backdropView)
+
+        tintView.isUserInteractionEnabled = false
+        pillView.addSubview(tintView)
+
+        contentFilterView.isUserInteractionEnabled = false
+        pillView.addSubview(contentFilterView)
+
+        symbolView.contentMode = .scaleAspectFit
+        contentFilterView.addSubview(symbolView)
+
+        titleLabel.font = .boldSystemFont(ofSize: 18)
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.8
+        contentFilterView.addSubview(titleLabel)
+
+        subtitleLabel.font = .systemFont(ofSize: 11, weight: .semibold)
+        subtitleLabel.adjustsFontSizeToFitWidth = true
+        subtitleLabel.minimumScaleFactor = 0.8
+        contentFilterView.addSubview(subtitleLabel)
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+
+        backdropView.backdropFilters = recipe.makeBackdropFilters()
+        tintView.backgroundColor = UIColor.white.withAlphaComponent(recipe.tintAlpha)
+        contentFilterView.layer.filters = recipe.makeForegroundFilters()
+
+        symbolView.image = UIImage(systemName: recipe.symbolName)
+        symbolView.tintColor = recipe.contentColor
+
+        titleLabel.text = recipe.title
+        titleLabel.textColor = recipe.contentColor
+
+        subtitleLabel.text = recipe.subtitle
+        subtitleLabel.textColor = recipe.contentColor.withAlphaComponent(0.78)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        circlesView.frameWithoutTransform = bounds
+
+        let pillFrame = bounds.insetBy(dx: 20, dy: 16)
+        pillView.frameWithoutTransform = pillFrame
+        backdropView.frameWithoutTransform = pillView.bounds
+        tintView.frameWithoutTransform = pillView.bounds
+        contentFilterView.frameWithoutTransform = pillView.bounds
+
+        let insetX: CGFloat = 18
+        let insetY: CGFloat = 14
+        symbolView.frameWithoutTransform = CGRect(
+            x: insetX,
+            y: (pillView.bounds.height - 22) / 2,
+            width: 22,
+            height: 22
+        )
+
+        let textX = symbolView.frame.maxX + 12
+        let textWidth = max(0, pillView.bounds.width - textX - insetX)
+        titleLabel.frameWithoutTransform = CGRect(
+            x: textX,
+            y: insetY,
+            width: textWidth,
+            height: 24
+        )
+        subtitleLabel.frameWithoutTransform = CGRect(
+            x: textX,
+            y: titleLabel.frame.maxY + 2,
+            width: textWidth,
+            height: 16
+        )
+    }
+}
+
+private final class OpacityPairPreviewView: BaseView {
+    private let circlesView = BackgroundCirclesView()
+    private let rawPillView = UIView()
+    private let rawBlurView = BackdropView()
+    private let rawBaseTintView = UIView()
+    private let rawInnerTintView = UIView()
+    private let rawHighlightView = UIView()
+    private let rawTitleLabel = UILabel()
+    private let rawDetailLabel = UILabel()
+
+    private let filteredPillView = UIView()
+    private let filteredBlurView = BackdropView()
+    private let filteredBaseTintView = UIView()
+    private let filteredInnerTintView = UIView()
+    private let filteredHighlightView = UIView()
+    private let filteredTitleLabel = UILabel()
+    private let filteredDetailLabel = UILabel()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        backgroundColor = UIColor(red: 0.18, green: 0.22, blue: 0.42, alpha: 1.0)
+        cornerRadius = 16
+        clipsToBounds = true
+
+        addSubview(circlesView)
+
+        configurePill(rawPillView)
+        configurePill(filteredPillView)
+
+        rawTitleLabel.text = "Raw stack"
+        rawDetailLabel.text = "two alpha passes"
+
+        filteredTitleLabel.text = "opacityPair"
+        filteredDetailLabel.text = "inputAmount = 0.55"
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+
+        let blurFilters = [
+            BackdropView.makeGaussianBlurFilter(radius: 10, normalizeEdges: true)
+        ].compactMap { $0 }
+
+        rawBlurView.backdropFilters = blurFilters
+        filteredBlurView.backdropFilters = blurFilters
+
+        rawPillView.layer.filters = nil
+        filteredPillView.layer.filters = [
+            BackdropView.makeOpacityPairFilter(amount: 0.55)
+        ].compactMap { $0 }
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        circlesView.frameWithoutTransform = bounds
+
+        let horizontalInset: CGFloat = 12
+        let topInset: CGFloat = 14
+        let gap: CGFloat = 12
+        let pillWidth = (bounds.width - (horizontalInset * 2) - gap) / 2
+        let pillFrame = CGRect(
+            x: horizontalInset,
+            y: topInset,
+            width: pillWidth,
+            height: bounds.height - (topInset * 2)
+        )
+
+        layoutPill(
+            rawPillView,
+            blurView: rawBlurView,
+            baseTintView: rawBaseTintView,
+            innerTintView: rawInnerTintView,
+            highlightView: rawHighlightView,
+            titleLabel: rawTitleLabel,
+            detailLabel: rawDetailLabel,
+            frame: pillFrame
+        )
+
+        layoutPill(
+            filteredPillView,
+            blurView: filteredBlurView,
+            baseTintView: filteredBaseTintView,
+            innerTintView: filteredInnerTintView,
+            highlightView: filteredHighlightView,
+            titleLabel: filteredTitleLabel,
+            detailLabel: filteredDetailLabel,
+            frame: pillFrame.offsetBy(dx: pillWidth + gap, dy: 0)
+        )
+    }
+
+    private func configurePill(_ pillView: UIView) {
+        pillView.cornerRadius = 22
+        pillView.clipsToBounds = true
+        pillView.layer.borderWidth = 1
+        pillView.layer.borderColor = UIColor.white.withAlphaComponent(0.18).cgColor
+        addSubview(pillView)
+
+        let blurView = pillView === rawPillView ? rawBlurView : filteredBlurView
+        let baseTintView = pillView === rawPillView ? rawBaseTintView : filteredBaseTintView
+        let innerTintView = pillView === rawPillView ? rawInnerTintView : filteredInnerTintView
+        let highlightView = pillView === rawPillView ? rawHighlightView : filteredHighlightView
+        let titleLabel = pillView === rawPillView ? rawTitleLabel : filteredTitleLabel
+        let detailLabel = pillView === rawPillView ? rawDetailLabel : filteredDetailLabel
+
+        pillView.addSubview(blurView)
+
+        baseTintView.backgroundColor = UIColor.systemPink.withAlphaComponent(0.26)
+        baseTintView.isUserInteractionEnabled = false
+        pillView.addSubview(baseTintView)
+
+        innerTintView.backgroundColor = UIColor.systemTeal.withAlphaComponent(0.22)
+        innerTintView.isUserInteractionEnabled = false
+        pillView.addSubview(innerTintView)
+
+        highlightView.backgroundColor = UIColor.white.withAlphaComponent(0.18)
+        highlightView.isUserInteractionEnabled = false
+        pillView.addSubview(highlightView)
+
+        titleLabel.font = .boldSystemFont(ofSize: 14)
+        titleLabel.textColor = UIColor.white.withAlphaComponent(0.96)
+        pillView.addSubview(titleLabel)
+
+        detailLabel.font = .systemFont(ofSize: 10, weight: .semibold)
+        detailLabel.textColor = UIColor.white.withAlphaComponent(0.72)
+        pillView.addSubview(detailLabel)
+    }
+
+    private func layoutPill(
+        _ pillView: UIView,
+        blurView: BackdropView,
+        baseTintView: UIView,
+        innerTintView: UIView,
+        highlightView: UIView,
+        titleLabel: UILabel,
+        detailLabel: UILabel,
+        frame: CGRect
+    ) {
+        pillView.frameWithoutTransform = frame
+        blurView.frameWithoutTransform = pillView.bounds
+        baseTintView.frameWithoutTransform = pillView.bounds
+        innerTintView.frameWithoutTransform = pillView.bounds.insetBy(dx: 12, dy: 11)
+        innerTintView.cornerRadius = 14
+
+        let highlightWidth = max(28, pillView.bounds.width * 0.44)
+        highlightView.frameWithoutTransform = CGRect(
+            x: pillView.bounds.width - highlightWidth - 12,
+            y: pillView.bounds.height - 20,
+            width: highlightWidth,
+            height: 8
+        )
+        highlightView.cornerRadius = 4
+
+        let textWidth = pillView.bounds.width - 24
+        titleLabel.frameWithoutTransform = CGRect(x: 12, y: 12, width: textWidth, height: 18)
+        detailLabel.frameWithoutTransform = CGRect(x: 12, y: titleLabel.frame.maxY + 2, width: textWidth, height: 14)
+    }
+}
+
+private final class DisplacementMapPreviewView: BaseView {
+    private let rawTileView = UIView()
+    private let rawPatternView = WarpPatternView()
+    private let rawCardView = UIView()
+    private let rawTitleLabel = UILabel()
+    private let rawDetailLabel = UILabel()
+
+    private let hostedTileView = UIView()
+    private let hostedPatternView = WarpPatternView()
+    private let hostedLensView = LensView()
+    private let hostedTitleLabel = UILabel()
+    private let hostedDetailLabel = UILabel()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        backgroundColor = UIColor(red: 0.17, green: 0.20, blue: 0.38, alpha: 1.0)
+        cornerRadius = 16
+        clipsToBounds = true
+
+        configureTile(rawTileView)
+        configureTile(hostedTileView)
+
+        rawTileView.addSubview(rawPatternView)
+        rawCardView.backgroundColor = UIColor.white.withAlphaComponent(0.12)
+        rawCardView.cornerRadius = 16
+        rawCardView.layer.borderWidth = 1
+        rawCardView.layer.borderColor = UIColor.white.withAlphaComponent(0.18).cgColor
+        rawTileView.addSubview(rawCardView)
+
+        rawTitleLabel.text = "Standalone"
+        rawTitleLabel.font = .boldSystemFont(ofSize: 14)
+        rawTitleLabel.textColor = UIColor.white.withAlphaComponent(0.96)
+        rawCardView.addSubview(rawTitleLabel)
+
+        rawDetailLabel.text = "displacementMap(1.25)"
+        rawDetailLabel.font = .systemFont(ofSize: 10, weight: .semibold)
+        rawDetailLabel.textColor = UIColor.white.withAlphaComponent(0.72)
+        rawCardView.addSubview(rawDetailLabel)
+
+        hostedTileView.addSubview(hostedPatternView)
+
+        hostedLensView.style = .clear
+        hostedLensView.restingBackgroundColor = UIColor.white.withAlphaComponent(0.08)
+        hostedTileView.addSubview(hostedLensView)
+
+        hostedTitleLabel.text = "Hosted"
+        hostedTitleLabel.font = .boldSystemFont(ofSize: 14)
+        hostedTitleLabel.textColor = UIColor.white.withAlphaComponent(0.96)
+        hostedTileView.addSubview(hostedTitleLabel)
+
+        hostedDetailLabel.text = "LensView(.clear)"
+        hostedDetailLabel.font = .systemFont(ofSize: 10, weight: .semibold)
+        hostedDetailLabel.textColor = UIColor.white.withAlphaComponent(0.72)
+        hostedTileView.addSubview(hostedDetailLabel)
+    }
+
+    override func updateProperties() {
+        super.updateProperties()
+        rawTileView.layer.filters = [
+            BackdropView.makeDisplacementMapFilter(amount: 1.25)
+        ].compactMap { $0 }
+        hostedLensView.setLifted(true, animated: false)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        let horizontalInset: CGFloat = 12
+        let verticalInset: CGFloat = 14
+        let gap: CGFloat = 12
+        let tileWidth = (bounds.width - (horizontalInset * 2) - gap) / 2
+        let tileHeight = bounds.height - (verticalInset * 2)
+        let rawFrame = CGRect(x: horizontalInset, y: verticalInset, width: tileWidth, height: tileHeight)
+        let hostedFrame = rawFrame.offsetBy(dx: tileWidth + gap, dy: 0)
+
+        layoutTile(rawTileView, patternView: rawPatternView, titleLabel: nil, detailLabel: nil, frame: rawFrame)
+        layoutTile(hostedTileView, patternView: hostedPatternView, titleLabel: hostedTitleLabel, detailLabel: hostedDetailLabel, frame: hostedFrame)
+
+        rawCardView.frameWithoutTransform = CGRect(
+            x: 14,
+            y: tileHeight - 48,
+            width: tileWidth - 28,
+            height: 34
+        )
+        let rawTextWidth = rawCardView.bounds.width - 18
+        rawTitleLabel.frameWithoutTransform = CGRect(x: 10, y: 6, width: rawTextWidth, height: 16)
+        rawDetailLabel.frameWithoutTransform = CGRect(x: 10, y: 20, width: rawTextWidth, height: 10)
+
+        hostedLensView.frameWithoutTransform = CGRect(
+            x: (tileWidth - 92) / 2,
+            y: 26,
+            width: 92,
+            height: 56
+        )
+        let hostedTextWidth = tileWidth - 20
+        hostedTitleLabel.frameWithoutTransform = CGRect(x: 10, y: tileHeight - 34, width: hostedTextWidth, height: 16)
+        hostedDetailLabel.frameWithoutTransform = CGRect(x: 10, y: hostedTitleLabel.frame.maxY + 2, width: hostedTextWidth, height: 10)
+    }
+
+    private func configureTile(_ tileView: UIView) {
+        tileView.cornerRadius = 20
+        tileView.clipsToBounds = true
+        tileView.backgroundColor = UIColor.white.withAlphaComponent(0.08)
+        tileView.layer.borderWidth = 1
+        tileView.layer.borderColor = UIColor.white.withAlphaComponent(0.16).cgColor
+        addSubview(tileView)
+    }
+
+    private func layoutTile(
+        _ tileView: UIView,
+        patternView: WarpPatternView,
+        titleLabel: UILabel?,
+        detailLabel: UILabel?,
+        frame: CGRect
+    ) {
+        tileView.frameWithoutTransform = frame
+        patternView.frameWithoutTransform = tileView.bounds
+        titleLabel?.frameWithoutTransform = .zero
+        detailLabel?.frameWithoutTransform = .zero
+    }
+}
+
+private final class WarpPatternView: UIView {
+    private let horizontalLayer = CAShapeLayer()
+    private let verticalLayer = CAShapeLayer()
+    private let dotViews = (0..<4).map { _ in UIView() }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = UIColor(red: 0.11, green: 0.13, blue: 0.28, alpha: 1.0)
+
+        horizontalLayer.strokeColor = UIColor.white.withAlphaComponent(0.22).cgColor
+        horizontalLayer.lineWidth = 1
+        layer.addSublayer(horizontalLayer)
+
+        verticalLayer.strokeColor = UIColor.white.withAlphaComponent(0.12).cgColor
+        verticalLayer.lineWidth = 1
+        layer.addSublayer(verticalLayer)
+
+        for (index, dotView) in dotViews.enumerated() {
+            dotView.backgroundColor = [
+                UIColor.systemPink,
+                UIColor.systemTeal,
+                UIColor.systemOrange,
+                UIColor.systemBlue
+            ][index].withAlphaComponent(0.78)
+            addSubview(dotView)
+        }
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        let horizontalPath = UIBezierPath()
+        for progress in stride(from: 0.22, through: 0.78, by: 0.28) {
+            let y = bounds.height * progress
+            horizontalPath.move(to: CGPoint(x: 0, y: y))
+            horizontalPath.addLine(to: CGPoint(x: bounds.width, y: y))
+        }
+        horizontalLayer.frame = bounds
+        horizontalLayer.path = horizontalPath.cgPath
+
+        let verticalPath = UIBezierPath()
+        for progress in stride(from: 0.20, through: 0.80, by: 0.20) {
+            let x = bounds.width * progress
+            verticalPath.move(to: CGPoint(x: x, y: 0))
+            verticalPath.addLine(to: CGPoint(x: x, y: bounds.height))
+        }
+        verticalLayer.frame = bounds
+        verticalLayer.path = verticalPath.cgPath
+
+        let dotFrames = [
+            CGRect(x: bounds.width * 0.16, y: bounds.height * 0.20, width: 14, height: 14),
+            CGRect(x: bounds.width * 0.68, y: bounds.height * 0.24, width: 12, height: 12),
+            CGRect(x: bounds.width * 0.24, y: bounds.height * 0.60, width: 18, height: 18),
+            CGRect(x: bounds.width * 0.72, y: bounds.height * 0.62, width: 16, height: 16)
+        ]
+
+        for (dotView, frame) in zip(dotViews, dotFrames) {
+            dotView.frameWithoutTransform = frame
+            dotView.cornerRadius = frame.width / 2
         }
     }
 }
