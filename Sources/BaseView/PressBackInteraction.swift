@@ -116,8 +116,8 @@ open class PressBackInteraction: NSObject, UIInteraction {
     }
 }
 
-private final class SimultaneousPressGestureRecognizer: UILongPressGestureRecognizer, UIGestureRecognizerDelegate {
-    override init(target: Any?, action: Selector?) {
+public final class SimultaneousPressGestureRecognizer: UILongPressGestureRecognizer, UIGestureRecognizerDelegate {
+    public override init(target: Any?, action: Selector?) {
         super.init(target: target, action: action)
         configure()
     }
@@ -136,18 +136,18 @@ private final class SimultaneousPressGestureRecognizer: UILongPressGestureRecogn
         delegate = self
     }
 
-    func gestureRecognizer(
+    public func gestureRecognizer(
         _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
         true
     }
 
-    override func canPrevent(_ preventedGestureRecognizer: UIGestureRecognizer) -> Bool {
+    public override func canPrevent(_ preventedGestureRecognizer: UIGestureRecognizer) -> Bool {
         false
     }
 
-    override func canBePrevented(by preventingGestureRecognizer: UIGestureRecognizer) -> Bool {
+    public override func canBePrevented(by preventingGestureRecognizer: UIGestureRecognizer) -> Bool {
         false
     }
 }

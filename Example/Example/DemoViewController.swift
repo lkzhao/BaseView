@@ -242,18 +242,100 @@ private struct GlassLavaButtonExample: ComponentBuilder {
                 .textColor(.white)
         }
         .inset(h: 20, v: 12)
-        .visualEffectView()
-        .effect(UIGlassEffect(style: .clear).with(\.isInteractive, value: true))
-        .roundedCorner()
-        .background {
-            ViewComponent<LavaLampBlobFieldView>()
-                .with(\.baseColor, baseColor)
-                .with(\.highlightColor, highlightColor)
+        .view(as: LavaLampView.self)
+        .with(\.fieldView.baseColor, baseColor)
+        .with(\.fieldView.highlightColor, highlightColor)
+    }
+}
+
+class LavaLampView: BaseView, ViewWrapperComponentView {
+    let fieldView = LavaLampBlobFieldView()
+    let glassView = UIVisualEffectView(effect: UIGlassEffect(style: .clear))
+    let gradientView = GradientView()
+
+    private lazy var pressRecognizer = SimultaneousPressGestureRecognizer(
+        target: self,
+        action: #selector(handlePress(_:))
+    )
+    private var initialTouchPoint: CGPoint = .zero
+    private var isPressing = false {
+        didSet {
+            guard oldValue != isPressing else { return }
+            let anim = CASpringAnimation(perceptualDuration: 0.4, bounce: 0.65)
+            anim.keyPath = "transform"
+            if isPressing {
+                anim.isAdditive = true
+                anim.toValue = CATransform3D.identity.scaledBy(1.1)
+                anim.fillMode = .both
+                anim.isRemovedOnCompletion = false
+                layer.add(anim, forKey: "transform")
+            } else {
+                anim.fromValue = layer.presentation()?.transform
+                layer.add(anim, forKey: "transform")
+                layer.transform = .identity
+            }
+            UIView.animate(springDuration: 0.35, bounce: 0.5, delay: 0, options: [.allowUserInteraction, .beginFromCurrentState]) {
+                self.fieldView.innerShadowView.shadowOffset = CGSize(width: 0, height: self.isPressing ? 10 : 6)
+                self.fieldView.innerShadowView.shadowOpacity = self.isPressing ? 0.6 : 1.0
+                self.gradientView.alpha = self.isPressing ? 1.0 : 0.0
+                self.gradientView.locations = self.isPressing ? [0, 1] : [0, 2.3]
+                self.gradientView.updatePropertiesIfNeeded()
+            }
+        }
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        addSubview(fieldView)
+        addSubview(glassView)
+        addSubview(gradientView)
+        gradientView.colors = [.white.applyingContentHeadroom(1.5).withAlphaComponent(0.4), .white.applyingContentHeadroom(1.5).withAlphaComponent(0.0)]
+        gradientView.gradientLayer.type = .radial
+        gradientView.locations = [0, 1]
+        gradientView.easeFunctions = [.easeInOut]
+        gradientView.clipsToBounds = true
+        gradientView.alpha = 0
+        addGestureRecognizer(pressRecognizer)
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        fieldView.frameWithoutTransform = bounds
+        glassView.frameWithoutTransform = bounds
+        gradientView.frameWithoutTransform = bounds
+        glassView.cornerRadius = bounds.height / 2
+        fieldView.cornerRadius = bounds.height / 2
+        gradientView.cornerRadius = bounds.height / 2
+    }
+    
+    var contentComponentEngine: ComponentEngine {
+        glassView.contentView.componentEngine
+    }
+    
+    @objc private func handlePress(_ gesture: UILongPressGestureRecognizer) {
+        let location = gesture.location(in: self)
+
+        switch gesture.state {
+        case .began:
+            isPressing = true
+            initialTouchPoint = location
+            fallthrough
+        case .changed:
+            gradientView.startPoint = location / bounds.size
+            gradientView.endPoint = (location / bounds.size) + CGSize(width: 1, height: 1).size(fill: bounds.size) / bounds.size * 0.6
+            let translation = location - initialTouchPoint
+            let scaleX = 1.0 + abs(translation.x) * 0.0005
+            let scaleY = 1.0 + abs(translation.y) * 0.0005
+            let offset = translation * 0.03
+            transform = CGAffineTransform.identity.scaledBy(x: scaleX, y: scaleY).translatedBy(offset)
+        default:
+            isPressing = false
         }
     }
 }
 
-private final class LavaLampBlobFieldView: BaseView {
+final class LavaLampBlobFieldView: BaseView {
     private struct BlobOrbitConfiguration {
         let size: CGSize
         let orbitCenter: CGPoint
@@ -266,10 +348,10 @@ private final class LavaLampBlobFieldView: BaseView {
         let delay: CFTimeInterval
     }
 
-    private let outerShadowView = UIView()
-    private let innerShadowView = UIView()
-    private let clippedContentView = UIView()
-    private let baseGradientView = GradientView()
+    let outerShadowView = UIView()
+    let innerShadowView = UIView()
+    let clippedContentView = UIView()
+    let baseGradientView = GradientView()
     var baseColor: UIColor = UIColor(red: 0.98, green: 0.62, blue: 0.02, alpha: 1.0) {
         didSet {
             updateDerivedColors()
