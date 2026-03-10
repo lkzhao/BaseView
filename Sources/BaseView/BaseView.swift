@@ -51,8 +51,14 @@ open class BaseView: UIView {
         withObservationTracking {
             updateProperties()
         } onChange: { [weak self] in
-            MainActor.assumeIsolated {
-                self?.setNeedsUpdateProperties()
+            if Thread.isMainThread {
+                MainActor.assumeIsolated {
+                    self?.setNeedsUpdateProperties()
+                }
+            } else {
+                Task { @MainActor in
+                    self?.setNeedsUpdateProperties()
+                }
             }
         }
         _needsUpdateProperties = false
