@@ -69,6 +69,7 @@ open class PortalView: UIView {
     /// When `true`, the source layer is hidden in other portals.
     open var hidesSourceLayerInOtherPortals: Bool = false {
         didSet {
+            guard #available(iOS 26.0, *) else { return }
             portalView?.setValue(hidesSourceLayerInOtherPortals, forKey: ObfuscatedKeys.hidesSourceLayerInOtherPortals)
         }
     }
@@ -133,7 +134,9 @@ open class PortalView: UIView {
         portal.setValue(matchesTransform, forKey: ObfuscatedKeys.matchesTransform)
         portal.setValue(matchesPosition, forKey: ObfuscatedKeys.matchesPosition)
         portal.setValue(hidesSourceView, forKey: ObfuscatedKeys.hidesSourceView)
-        portal.setValue(hidesSourceLayerInOtherPortals, forKey: ObfuscatedKeys.hidesSourceLayerInOtherPortals)
+        if #available(iOS 26.0, *) {
+            portal.setValue(hidesSourceLayerInOtherPortals, forKey: ObfuscatedKeys.hidesSourceLayerInOtherPortals)
+        }
         updateSourceView()
     }
 

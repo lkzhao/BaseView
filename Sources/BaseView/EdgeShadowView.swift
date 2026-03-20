@@ -129,7 +129,7 @@ open class EdgeShadowView: BaseView {
         let circularRadii = normalizedRadii(resolvedRadii, in: rect, curveStyle: .circular)
 
         if preferredCurveStyle == .continuous,
-           rect.height <= circularRadii.topLeft + circularRadii.bottomLeft + 10 {
+           rect.height <= circularRadii.topLeft + circularRadii.bottomLeft + 32 {
             return circularRoundedPath(in: rect, radii: circularRadii)
         }
 

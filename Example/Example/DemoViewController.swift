@@ -4,6 +4,20 @@ import UIComponent
 import BaseToolbox
 import Motion
 
+private func demoRegularGlassEffect() -> UIVisualEffect {
+    if #available(iOS 26.0, *) {
+        return UIGlassEffect(style: .regular)
+    }
+    return UIBlurEffect(style: .systemMaterial)
+}
+
+private func demoClearGlassEffect() -> UIVisualEffect {
+    if #available(iOS 26.0, *) {
+        return UIGlassEffect(style: .clear)
+    }
+    return UIBlurEffect(style: .systemUltraThinMaterial)
+}
+
 final class DemoViewController: UIViewController {
     private let rootView = DemoRootView()
 
@@ -18,12 +32,10 @@ final class DemoViewController: UIViewController {
 }
 
 private final class DemoRootView: BaseView {
-    @available(iOS 26.0, *)
     private let smallSheetDetent = SheetView.Detent.custom(id: "small") {
         .init(height: 60, insets: UIEdgeInsets(left: 16, bottom: max(16, $0.safeAreaInsets.bottom), right: 16))
     }
     
-    @available(iOS 26.0, *)
     private var showsCompactSheetContent = true {
         didSet {
             guard showsCompactSheetContent != oldValue else { return }
@@ -31,28 +43,25 @@ private final class DemoRootView: BaseView {
         }
     }
 
-    @available(iOS 26.0, *)
     let sheetView = SheetView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        ClassRuntimePrinter.printInfo(for: "_UIPortalView")
         backgroundColor = .systemBackground
-        if #available(iOS 26.0, *) {
-            sheetView.detents = [
-                .large(),
-                .medium(),
-                smallSheetDetent
-            ]
-            sheetView.setCurrentDetent(smallSheetDetent, animated: false)
-            sheetView.contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleSheetTap)))
-            sheetView.onHeightChange = { [weak self] in
-                self?.showsCompactSheetContent = $0 < 100
-            }
-            updateSheetContent()
+        sheetView.detents = [
+            .large(),
+            .medium(),
+            smallSheetDetent
+        ]
+        sheetView.setCurrentDetent(smallSheetDetent, animated: false)
+        sheetView.contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleSheetTap)))
+        sheetView.onHeightChange = { [weak self] in
+            self?.showsCompactSheetContent = $0 < 100
         }
+        updateSheetContent()
     }
 
-    @available(iOS 26.0, *)
     private func updateSheetContent() {
         if showsCompactSheetContent {
             sheetView.contentView.componentEngine.component = Text("Tap to expand SheetView", font: .systemFont(ofSize: 18, weight: .semibold))
@@ -74,7 +83,7 @@ private final class DemoRootView: BaseView {
     }
 
     @objc private func handleSheetTap() {
-        guard #available(iOS 26.0, *), sheetView.currentDetent.id == "small" else { return }
+        guard sheetView.currentDetent.id == "small" else { return }
         sheetView.setCurrentDetent(.medium(), animated: true)
     }
 
@@ -191,19 +200,21 @@ private final class DemoRootView: BaseView {
                     .measureSize(key: "backdrop")
             )
 
-            DemoCard(
-                title: "LensView",
-                detail: "A clear lens that lifts on press.",
-                preview: ViewComponent<LensDemoView>()
-                    .size(width: .fill, height: 160)
-            )
-            
-            DemoCard(
-                title: "Loupe View",
-                detail: "A magnifying loupe view that zooms.",
-                preview: ViewComponent<LoupeDemoView>()
-                    .size(width: .fill, height: 160)
-            )
+            if #available(iOS 26.0, *) {
+                DemoCard(
+                    title: "LensView",
+                    detail: "A clear lens that lifts on press.",
+                    preview: ViewComponent<LensDemoView>()
+                        .size(width: .fill, height: 160)
+                )
+
+                DemoCard(
+                    title: "Loupe View",
+                    detail: "A magnifying loupe view that zooms.",
+                    preview: ViewComponent<LoupeDemoView>()
+                        .size(width: .fill, height: 160)
+                )
+            }
 
             DemoCard(
                 title: "PressBackInteraction",
@@ -285,7 +296,7 @@ private struct GlassLavaButtonExample: ComponentBuilder {
 
 class LavaLampView: BaseView, ViewWrapperComponentView {
     let fieldView = LavaLampBlobFieldView()
-    let glassView = UIVisualEffectView(effect: UIGlassEffect(style: .clear))
+    let glassView = UIVisualEffectView(effect: demoClearGlassEffect())
     let gradientView = GradientView()
 
     private lazy var pressRecognizer = SimultaneousPressGestureRecognizer(
@@ -325,7 +336,11 @@ class LavaLampView: BaseView, ViewWrapperComponentView {
         addSubview(fieldView)
         addSubview(glassView)
         addSubview(gradientView)
-        gradientView.colors = [.white.applyingContentHeadroom(1.5).withAlphaComponent(0.4), .white.applyingContentHeadroom(1.5).withAlphaComponent(0.0)]
+        if #available(iOS 26.0, *) {
+            gradientView.colors = [.white.applyingContentHeadroom(1.5).withAlphaComponent(0.4), .white.applyingContentHeadroom(1.5).withAlphaComponent(0.0)]
+        } else {
+            gradientView.colors = [.white.withAlphaComponent(0.4), .white.withAlphaComponent(0.0)]
+        }
         gradientView.gradientLayer.type = .radial
         gradientView.locations = [0, 1]
         gradientView.easeFunctions = [.easeInOut]
@@ -798,8 +813,8 @@ private final class VisualEffectIntensityDemoView: BaseView {
         EffectOption(title: "Thick", effect: UIBlurEffect(style: .systemThickMaterial)),
         EffectOption(title: "Chrome", effect: UIBlurEffect(style: .systemChromeMaterial)),
         EffectOption(title: "Ultra Thin", effect: UIBlurEffect(style: .systemUltraThinMaterial)),
-        EffectOption(title: "Regular Glass", effect: UIGlassEffect(style: .regular)),
-        EffectOption(title: "Clear Glass", effect: UIGlassEffect(style: .clear)),
+        EffectOption(title: "Regular Glass", effect: demoRegularGlassEffect()),
+        EffectOption(title: "Clear Glass", effect: demoClearGlassEffect()),
         EffectOption(title: "Variable Blur", effect: UIBlurEffect.variable(direction: .topToBottom, radius: 8)),
         EffectOption(title: "Variable Blur (Horizontal)", effect: UIBlurEffect.variable(direction: .leftToRight, radius: 8)),
     ]
@@ -1013,12 +1028,14 @@ private final class BackdropFilterStudyView: BaseView {
                     .size(width: .fill, height: 124)
             )
 
-            BackdropFilterStudyRow(
-                title: "displacementMap",
-                detail: "The raw filter takes `inputAmount`, but UIKit's visible glass warp comes from a private clear-glass host supplying the displacement field.",
-                preview: ViewComponent<DisplacementMapPreviewView>()
-                    .size(width: .fill, height: 132)
-            )
+            if #available(iOS 26.0, *) {
+                BackdropFilterStudyRow(
+                    title: "displacementMap",
+                    detail: "The raw filter takes `inputAmount`, but UIKit's visible glass warp comes from a private clear-glass host supplying the displacement field.",
+                    preview: ViewComponent<DisplacementMapPreviewView>()
+                        .size(width: .fill, height: 132)
+                )
+            }
         }
         .inset(12)
         .fill()
@@ -1428,6 +1445,7 @@ private final class OpacityPairPreviewView: BaseView {
     }
 }
 
+@available(iOS 26.0, *)
 private final class DisplacementMapPreviewView: BaseView {
     private let rawTileView = UIView()
     private let rawPatternView = WarpPatternView()
@@ -1617,6 +1635,7 @@ private final class WarpPatternView: UIView {
     }
 }
 
+@available(iOS 26.0, *)
 private final class LensDemoView: BaseView {
     private let lensView = LensView()
     private lazy var pressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handlePress(_:)))
@@ -1626,7 +1645,7 @@ private final class LensDemoView: BaseView {
             guard isPressing != oldValue else { return }
             lensView.setLifted(isPressing, animated: true, alongsideAnimations: {
                 self.lensView.transform = .identity.scaledBy(self.isPressing ? 1.2 : 1)
-            })
+            }, completion: nil)
         }
     }
 
@@ -1691,6 +1710,7 @@ private final class BackgroundCirclesView: BaseView {
     }
 }
 
+@available(iOS 26.0, *)
 private final class LoupeDemoView: BaseView {
     let loupeView = LoupeView()
     private lazy var pressGesture = UILongPressGestureRecognizer(target: self, action: #selector(handlePress(_:)))
@@ -1749,7 +1769,7 @@ private final class PressBackInteractionDemoView: BaseView {
             }
             .inset(40)
             .visualEffectView()
-            .effect(UIGlassEffect(style: .regular))
+            .effect(demoRegularGlassEffect())
             .cornerRadius(24)
             .view()
             .zPosition(700)

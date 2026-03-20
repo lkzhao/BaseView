@@ -3,7 +3,6 @@ import Motion
 import BaseToolbox
 
 /// Draggable bottom sheet view with detents and scroll-view coordination.
-@available(iOS 26.0, *)
 public class SheetView: SubviewHitTestOnlyView {
 
     public struct Detent: Equatable, Identifiable {
@@ -68,12 +67,12 @@ public class SheetView: SubviewHitTestOnlyView {
 
     public lazy var panGR = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gr:)))
     public lazy var headerPanGR = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gr:)))
-    public var shadowView = EdgeShadowView()
+    @available(iOS 26.0, *)
     public var sheetCornerConfiguration: UICornerConfiguration {
         get { glassView.cornerConfiguration }
         set {
             glassView.cornerConfiguration = newValue
-            glassView.contentView.cornerConfiguration = newValue
+            glassView.setNeedsUpdateProperties()
         }
     }
     public var showsGrabber: Bool {
@@ -96,21 +95,6 @@ public class SheetView: SubviewHitTestOnlyView {
         headerPanGR.delegate = self
         addGestureRecognizer(panGR)
         addGestureRecognizer(headerPanGR)
-
-        glassView.cornerConfiguration = UICornerConfiguration.uniformEdges(
-            topRadius: 40,
-            bottomRadius: .containerConcentric(minimum: 30)
-        )
-        glassView.contentView.cornerConfiguration = glassView.cornerConfiguration
-        glassView.contentView.clipsToBounds = true
-        shadowView.shadowColor = .red
-        shadowView.shadowRadius = 30
-        shadowView.shadowOpacity = 1.0
-        shadowView.shadowOffset = CGSize(width: 0, height: 20)
-        shadowView.cornerConfiguration = glassView.cornerConfiguration
-        shadowView.isUserInteractionEnabled = false
-        
-        addSubview(shadowView)
         addSubview(glassView)
 
         grabberView.backgroundColor = UIColor.secondaryLabel.withAlphaComponent(0.4)
@@ -197,7 +181,7 @@ public class SheetView: SubviewHitTestOnlyView {
     }
 
     private let grabberView = UIView()
-    private let glassView = UIVisualEffectView(effect: UIGlassEffect(style: .regular).with(\.isInteractive, value: true))
+    private let glassView = VisualEffectCardView()
     private let sheetHeightAnimation = SpringAnimation<CGFloat>()
     private let grabberSize = CGSize(width: 40, height: 6)
     private let grabberTopInset: CGFloat = 5
@@ -229,8 +213,6 @@ public class SheetView: SubviewHitTestOnlyView {
             center: CGPoint(x: targetMidX, y: targetMidY),
             size: CGSize(width: width, height: unscaledHeight)
         )
-        shadowView.frameWithoutTransform = glassView.frameWithoutTransform
-        shadowView.transform = .identity.scaledBy(x: scale, y: scale)
         glassView.transform = .identity.scaledBy(x: scale, y: scale)
 
         layoutGrabberView()
@@ -382,7 +364,6 @@ public class SheetView: SubviewHitTestOnlyView {
     }
 }
 
-@available(iOS 26.0, *)
 extension SheetView: UIGestureRecognizerDelegate {
     public override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         guard gestureRecognizer == headerPanGR else { return true }
