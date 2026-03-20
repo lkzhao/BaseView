@@ -19,28 +19,59 @@ final class DemoViewController: UIViewController {
 
 private final class DemoRootView: BaseView {
     @available(iOS 26.0, *)
-    let sheetView = SheetView().then {
-        let smallDetent = SheetView.Detent.custom(id: "small") {
-            .init(height: 60, insets: UIEdgeInsets(left: 16, bottom: max(16, $0.safeAreaInsets.bottom), right: 16))
-        }
-        $0.detents = [
-            .large(),
-            .medium(),
-            smallDetent
-        ]
-        $0.setCurrentDetent(smallDetent, animated: false)
-        $0.contentView.componentEngine.component = VStack(spacing: 16) {
-            Text("SheetView", font: .boldSystemFont(ofSize: 32))
-            for i in 0...100 {
-                Text("Sheet Item \(i)", font: .systemFont(ofSize: 16))
-            }
-        }.inset(v: 30, h: 20).scrollView().fill()
+    private let smallSheetDetent = SheetView.Detent.custom(id: "small") {
+        .init(height: 60, insets: UIEdgeInsets(left: 16, bottom: max(16, $0.safeAreaInsets.bottom), right: 16))
     }
+    
+    @available(iOS 26.0, *)
+    private var showsCompactSheetContent = true {
+        didSet {
+            guard showsCompactSheetContent != oldValue else { return }
+            updateSheetContent()
+        }
+    }
+
+    @available(iOS 26.0, *)
+    let sheetView = SheetView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         backgroundColor = .systemBackground
-        ClassRuntimePrinter.printInfo(for: "_UIFlexInteraction")
+        if #available(iOS 26.0, *) {
+            sheetView.detents = [
+                .large(),
+                .medium(),
+                smallSheetDetent
+            ]
+            sheetView.setCurrentDetent(smallSheetDetent, animated: false)
+            sheetView.contentView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleSheetTap)))
+            sheetView.onHeightChange = { [weak self] in
+                self?.showsCompactSheetContent = $0 < 100
+            }
+            updateSheetContent()
+        }
+    }
+
+    @available(iOS 26.0, *)
+    private func updateSheetContent() {
+        if showsCompactSheetContent {
+            sheetView.contentView.componentEngine.component = Text("Tap to expand SheetView", font: .systemFont(ofSize: 18, weight: .semibold))
+                .textAlignment(.center)
+                .inset(h: 20)
+                .fill()
+        } else {
+            sheetView.contentView.componentEngine.component = VStack(spacing: 16) {
+                Text("SheetView", font: .boldSystemFont(ofSize: 32))
+                for i in 0...100 {
+                    Text("Sheet Item \(i)", font: .systemFont(ofSize: 16))
+                }
+            }.inset(v: 30, h: 20).scrollView().fill()
+        }
+    }
+
+    @objc private func handleSheetTap() {
+        guard #available(iOS 26.0, *), sheetView.currentDetent.id == "small" else { return }
+        sheetView.setCurrentDetent(.medium(), animated: true)
     }
 
     override func updateProperties() {
