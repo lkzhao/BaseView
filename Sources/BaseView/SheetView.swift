@@ -8,9 +8,23 @@ public class SheetView: SubviewHitTestOnlyView {
 
     public struct Detent: Equatable, Identifiable {
 
-        public struct Value {
+        public struct Context {
+            public let bounds: CGRect
+            public let safeAreaInsets: UIEdgeInsets
+
+            public init(bounds: CGRect, safeAreaInsets: UIEdgeInsets) {
+                self.bounds = bounds
+                self.safeAreaInsets = safeAreaInsets
+            }
+        }
+
+        public struct Resolved {
             public let height: CGFloat
             public let insets: UIEdgeInsets
+
+            public var absoluteHeight: CGFloat {
+                height + insets.top + insets.bottom
+            }
 
             public init(height: CGFloat, insets: UIEdgeInsets = .zero) {
                 self.height = height
@@ -20,34 +34,36 @@ public class SheetView: SubviewHitTestOnlyView {
 
         public let id: String
 
-        public static func medium(insets: UIEdgeInsets = UIEdgeInsets(left: 6, bottom: 6, right: 6)) -> Detent {
-            Detent(id: "medium", kind: .medium(insets: insets))
+        public static func medium() -> Detent {
+            Detent(id: "medium") { context in
+                Resolved(height: context.bounds.height * 0.5, insets: UIEdgeInsets(left: 6, bottom: 6, right: 6))
+            }
         }
 
-        public static func large(insets: UIEdgeInsets = .zero) -> Detent {
-            Detent(id: "large", kind: .large(insets: insets))
+        public static func large() -> Detent {
+            Detent(id: "large") { context in
+                Resolved(height: context.bounds.height - context.safeAreaInsets.top, insets: .zero)
+            }
         }
 
-        public static func custom(id: String, insets: UIEdgeInsets = .zero, resolver: @escaping () -> CGFloat) -> Detent {
-            Detent(id: id, kind: .custom(resolver: {
-                Value(height: resolver(), insets: insets)
-            }))
-        }
-
-        public static func custom(id: String, resolver: @escaping () -> Value) -> Detent {
-            Detent(id: id, kind: .custom(resolver: resolver))
+        public static func custom(id: String, resolver: @escaping (Context) -> Resolved) -> Detent {
+            Detent(id: id, resolver: resolver)
         }
 
         public static func ==(lhs: Detent, rhs: Detent) -> Bool {
             lhs.id == rhs.id
         }
 
-        enum Kind {
-            case medium(insets: UIEdgeInsets)
-            case large(insets: UIEdgeInsets)
-            case custom(resolver: () -> Value)
+        public func resolve(in context: Context) -> Resolved {
+            resolver(context)
         }
-        let kind: Kind
+
+        private let resolver: (Context) -> Resolved
+
+        private init(id: String, resolver: @escaping (Context) -> Resolved) {
+            self.id = id
+            self.resolver = resolver
+        }
     }
 
     public lazy var panGR = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gr:)))
@@ -78,7 +94,7 @@ public class SheetView: SubviewHitTestOnlyView {
 
         glassView.cornerConfiguration = UICornerConfiguration.uniformEdges(
             topRadius: 40,
-            bottomRadius: .containerConcentric()
+            bottomRadius: .containerConcentric(minimum: 30)
         )
         glassView.contentView.cornerConfiguration = glassView.cornerConfiguration
         glassView.contentView.clipsToBounds = true
@@ -93,10 +109,10 @@ public class SheetView: SubviewHitTestOnlyView {
         sheetHeightAnimation.configure(response: 0.3, dampingRatio: 1.0)
         sheetHeightAnimation.resolvingEpsilon = 0.001
         sheetHeightAnimation.onValueChanged { [weak self] value in
-            self?.overrideSheetHeight = value
+            self?.overrideSheetAbsoluteHeight = value
         }
         sheetHeightAnimation.completion = { [weak self] in
-            self?.overrideSheetHeight = nil
+            self?.overrideSheetAbsoluteHeight = nil
         }
     }
 
@@ -119,29 +135,39 @@ public class SheetView: SubviewHitTestOnlyView {
         }
     }
 
+    public var currentSheetAbsoluteHeight: CGFloat {
+        overrideSheetAbsoluteHeight ?? resolvedDetent(detent: currentDetent).absoluteHeight
+    }
+
     public var currentSheetHeight: CGFloat {
-        overrideSheetHeight ?? targetSheetHeight(detent: currentDetent)
+        interpolatedDetent(forSheetAbsoluteHeight: currentSheetAbsoluteHeight).height
+    }
+
+    public var sheetAbsoluteHeightRange: ClosedRange<CGFloat> {
+        let min = detents.map { resolvedDetent(detent: $0).absoluteHeight }.min() ?? resolvedDetent(detent: .medium()).absoluteHeight
+        let max = detents.map { resolvedDetent(detent: $0).absoluteHeight }.max() ?? resolvedDetent(detent: .large()).absoluteHeight
+        return min...max
     }
 
     public var sheetHeightRange: ClosedRange<CGFloat> {
-        let min = detents.map { targetSheetHeight(detent: $0) }.min() ?? targetSheetHeight(detent: .medium())
-        let max = detents.map { targetSheetHeight(detent: $0) }.max() ?? targetSheetHeight(detent: .large())
+        let min = detents.map { resolvedDetent(detent: $0).height }.min() ?? resolvedDetent(detent: .medium()).height
+        let max = detents.map { resolvedDetent(detent: $0).height }.max() ?? resolvedDetent(detent: .large()).height
         return min...max
     }
 
     public func setCurrentDetent(_ detent: Detent, animated: Bool) {
         if animated {
-            let currentSheetHeight = currentSheetHeight
-            overrideSheetHeight = currentSheetHeight
+            let currentSheetAbsoluteHeight = currentSheetAbsoluteHeight
+            overrideSheetAbsoluteHeight = currentSheetAbsoluteHeight
             currentDetent = detent
 
-            let finalSheetHeight = targetSheetHeight(detent: detent)
-            sheetHeightAnimation.updateValue(to: currentSheetHeight)
-            sheetHeightAnimation.toValue = finalSheetHeight
+            let finalSheetAbsoluteHeight = resolvedDetent(detent: detent).absoluteHeight
+            sheetHeightAnimation.updateValue(to: currentSheetAbsoluteHeight)
+            sheetHeightAnimation.toValue = finalSheetAbsoluteHeight
             sheetHeightAnimation.start()
         } else {
             currentDetent = detent
-            overrideSheetHeight = nil
+            overrideSheetAbsoluteHeight = nil
             setNeedsLayout()
         }
     }
@@ -155,9 +181,9 @@ public class SheetView: SubviewHitTestOnlyView {
         }
     }
 
-    private var overrideSheetHeight: CGFloat? {
+    private var overrideSheetAbsoluteHeight: CGFloat? {
         didSet {
-            guard oldValue != overrideSheetHeight else { return }
+            guard oldValue != overrideSheetAbsoluteHeight else { return }
             notifyHeightChangeIfNeeded()
             setNeedsLayout()
         }
@@ -176,21 +202,21 @@ public class SheetView: SubviewHitTestOnlyView {
             trackedScrollView?.lockedToTop = isDraggingSheet
         }
     }
-
     private func layoutGlassView() {
         guard bounds.height > 0, bounds.width > 0 else { return }
 
-        let currentSheetHeight = currentSheetHeight
-        let finalSheetHeight = currentSheetHeight.clamp(sheetHeightRange.lowerBound, sheetHeightRange.upperBound)
-        let top = bounds.height - min(currentSheetHeight, finalSheetHeight)
+        let currentSheetAbsoluteHeight = currentSheetAbsoluteHeight
+        let finalSheetAbsoluteHeight = currentSheetAbsoluteHeight.clamp(sheetAbsoluteHeightRange.lowerBound, sheetAbsoluteHeightRange.upperBound)
+        let top = bounds.height - min(currentSheetAbsoluteHeight, finalSheetAbsoluteHeight)
         let width = bounds.width
-        let height = finalSheetHeight
-        let insets = interpolatedInsets(forSheetHeight: finalSheetHeight)
+        let resolved = interpolatedDetent(forSheetAbsoluteHeight: finalSheetAbsoluteHeight)
+        let height = resolved.height
+        let insets = resolved.insets
         let targetWidth = width - insets.left - insets.right
         let scale = width > 0 ? (targetWidth / width).clamp(0, 1) : 1
         let unscaledHeight = scale > 0 ? height / scale : 0
         let targetMidX = insets.left + targetWidth / 2
-        let targetMidY = top + height / 2 + insets.top - insets.bottom
+        let targetMidY = top + insets.top + height / 2
 
         glassView.frameWithoutTransform = CGRect(
             center: CGPoint(x: targetMidX, y: targetMidY),
@@ -211,53 +237,45 @@ public class SheetView: SubviewHitTestOnlyView {
         )
     }
 
-    private func resolvedDetentValue(detent: Detent) -> Detent.Value {
-        switch detent.kind {
-        case .medium(let insets):
-            return .init(height: bounds.height * 0.5, insets: insets)
-        case .large(let insets):
-            return .init(height: bounds.height - safeAreaInsets.top, insets: insets)
-        case .custom(let resolver):
-            return resolver()
-        }
+    private func resolvedDetent(detent: Detent) -> Detent.Resolved {
+        detent.resolve(in: .init(bounds: bounds, safeAreaInsets: safeAreaInsets))
     }
 
-    private func targetSheetHeight(detent: Detent) -> CGFloat {
-        resolvedDetentValue(detent: detent).height
-    }
-
-    private func interpolatedInsets(forSheetHeight sheetHeight: CGFloat) -> UIEdgeInsets {
+    private func interpolatedDetent(forSheetAbsoluteHeight sheetAbsoluteHeight: CGFloat) -> Detent.Resolved {
         let resolvedDetents = detents
-            .map { resolvedDetentValue(detent: $0) }
-            .sorted { $0.height < $1.height }
+            .map { resolvedDetent(detent: $0) }
+            .sorted { $0.absoluteHeight < $1.absoluteHeight }
 
         guard let first = resolvedDetents.first else {
-            return resolvedDetentValue(detent: .medium()).insets
+            return resolvedDetent(detent: .medium())
         }
         guard let last = resolvedDetents.last else {
-            return first.insets
+            return first
         }
 
-        if sheetHeight <= first.height {
-            return first.insets
+        if sheetAbsoluteHeight <= first.absoluteHeight {
+            return first
         }
-        if sheetHeight >= last.height {
-            return last.insets
+        if sheetAbsoluteHeight >= last.absoluteHeight {
+            return last
         }
 
         for index in 1..<resolvedDetents.count {
             let lower = resolvedDetents[index - 1]
             let upper = resolvedDetents[index]
-            guard sheetHeight <= upper.height else { continue }
+            guard sheetAbsoluteHeight <= upper.absoluteHeight else { continue }
 
-            let heightDelta = upper.height - lower.height
-            guard heightDelta > 0 else { return upper.insets }
+            let heightDelta = upper.absoluteHeight - lower.absoluteHeight
+            guard heightDelta > 0 else { return upper }
 
-            let progress = ((sheetHeight - lower.height) / heightDelta).clamp(0, 1)
-            return lower.insets + (upper.insets - lower.insets) * progress
+            let progress = ((sheetAbsoluteHeight - lower.absoluteHeight) / heightDelta).clamp(0, 1)
+            return .init(
+                height: lower.height + (upper.height - lower.height) * progress,
+                insets: lower.insets + (upper.insets - lower.insets) * progress
+            )
         }
 
-        return last.insets
+        return last
     }
     @objc private func handlePan(gr: UIPanGestureRecognizer) {
         let translation = gr.translation(in: self).y
@@ -266,13 +284,13 @@ public class SheetView: SubviewHitTestOnlyView {
         case .began:
             sheetHeightAnimation.stop(resolveImmediately: true, postValueChanged: false)
             let trackedScrollOffset = trackedScrollView.map { $0.contentOffset.y + $0.adjustedContentInset.top } ?? 0
-            overrideSheetHeight = currentSheetHeight + trackedScrollOffset
+            overrideSheetAbsoluteHeight = currentSheetAbsoluteHeight + trackedScrollOffset
             fallthrough
 
         case .changed:
-            let target = currentSheetHeight - translation
-            overrideSheetHeight = target
-            isDraggingSheet = currentSheetHeight <= sheetHeightRange.upperBound
+            let target = currentSheetAbsoluteHeight - translation
+            overrideSheetAbsoluteHeight = target
+            isDraggingSheet = currentSheetAbsoluteHeight <= sheetAbsoluteHeightRange.upperBound
             gr.setTranslation(.zero, in: nil)
 
             if isDraggingSheet {
@@ -280,29 +298,25 @@ public class SheetView: SubviewHitTestOnlyView {
             }
 
         default:
-            let currentSheetHeight = currentSheetHeight
+            let currentSheetAbsoluteHeight = currentSheetAbsoluteHeight
             if isDraggingSheet {
-                let stopSheetHeight = currentSheetHeight - gr.velocity(in: self).y * 0.3
+                let stopSheetAbsoluteHeight = currentSheetAbsoluteHeight - gr.velocity(in: self).y * 0.3
 
-                if let onDismiss, stopSheetHeight < 0 {
+                if let onDismiss, stopSheetAbsoluteHeight < 0 {
                     onDismiss()
                 } else {
-                    let targetDetent = detents.min { a, b -> Bool in
-                        abs(targetSheetHeight(detent: a) - stopSheetHeight) < abs(targetSheetHeight(detent: b) - stopSheetHeight)
-                    } ?? .medium()
+                    let targetDetent = closestDetent(forSheetAbsoluteHeight: stopSheetAbsoluteHeight)
 
                     currentDetent = targetDetent
-                    let finalSheetHeight = targetSheetHeight(detent: targetDetent)
+                    let finalSheetAbsoluteHeight = resolvedDetent(detent: targetDetent).absoluteHeight
 
-                    sheetHeightAnimation.updateValue(to: currentSheetHeight)
+                    sheetHeightAnimation.updateValue(to: currentSheetAbsoluteHeight)
                     sheetHeightAnimation.velocity = -gr.velocity(in: self).y
-                    sheetHeightAnimation.toValue = finalSheetHeight
+                    sheetHeightAnimation.toValue = finalSheetAbsoluteHeight
                     sheetHeightAnimation.start()
                 }
             } else {
-                let targetDetent = detents.min { a, b -> Bool in
-                    abs(targetSheetHeight(detent: a) - currentSheetHeight) < abs(targetSheetHeight(detent: b) - currentSheetHeight)
-                } ?? .medium()
+                let targetDetent = closestDetent(forSheetAbsoluteHeight: currentSheetAbsoluteHeight)
                 currentDetent = targetDetent
             }
         }
@@ -315,9 +329,9 @@ public class SheetView: SubviewHitTestOnlyView {
         onHeightChange?(height)
     }
 
-    private func closestDetent(forSheetHeight sheetHeight: CGFloat) -> Detent {
+    private func closestDetent(forSheetAbsoluteHeight sheetAbsoluteHeight: CGFloat) -> Detent {
         detents.min { a, b in
-            abs(targetSheetHeight(detent: a) - sheetHeight) < abs(targetSheetHeight(detent: b) - sheetHeight)
+            abs(resolvedDetent(detent: a).absoluteHeight - sheetAbsoluteHeight) < abs(resolvedDetent(detent: b).absoluteHeight - sheetAbsoluteHeight)
         } ?? currentDetent
     }
 

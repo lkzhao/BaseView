@@ -21,7 +21,7 @@ private final class DemoRootView: BaseView {
     @available(iOS 26.0, *)
     let sheetView = SheetView().then {
         let smallDetent = SheetView.Detent.custom(id: "small") {
-            .init(height: 60, insets: UIEdgeInsets(left: 16, bottom: 32, right: 16))
+            .init(height: 60, insets: UIEdgeInsets(left: 16, bottom: max(16, $0.safeAreaInsets.bottom), right: 16))
         }
         $0.detents = [
             .large(),
