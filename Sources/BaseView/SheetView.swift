@@ -1,5 +1,6 @@
 import UIKit
 import Motion
+import BaseToolbox
 
 /// Draggable bottom sheet view with detents and scroll-view coordination.
 @available(iOS 26.0, *)
@@ -7,17 +8,33 @@ public class SheetView: SubviewHitTestOnlyView {
 
     public struct Detent: Equatable, Identifiable {
 
+        public struct Value {
+            public let height: CGFloat
+            public let insets: UIEdgeInsets
+
+            public init(height: CGFloat, insets: UIEdgeInsets = .zero) {
+                self.height = height
+                self.insets = insets
+            }
+        }
+
         public let id: String
 
-        public static func medium() -> Detent {
-            Detent(id: "medium", kind: .medium)
+        public static func medium(insets: UIEdgeInsets = UIEdgeInsets(left: 6, bottom: 6, right: 6)) -> Detent {
+            Detent(id: "medium", kind: .medium(insets: insets))
         }
 
-        public static func large() -> Detent {
-            Detent(id: "large", kind: .large)
+        public static func large(insets: UIEdgeInsets = .zero) -> Detent {
+            Detent(id: "large", kind: .large(insets: insets))
         }
 
-        public static func custom(id: String, resolver: @escaping () -> CGFloat) -> Detent {
+        public static func custom(id: String, insets: UIEdgeInsets = .zero, resolver: @escaping () -> CGFloat) -> Detent {
+            Detent(id: id, kind: .custom(resolver: {
+                Value(height: resolver(), insets: insets)
+            }))
+        }
+
+        public static func custom(id: String, resolver: @escaping () -> Value) -> Detent {
             Detent(id: id, kind: .custom(resolver: resolver))
         }
 
@@ -26,9 +43,9 @@ public class SheetView: SubviewHitTestOnlyView {
         }
 
         enum Kind {
-            case medium
-            case large
-            case custom(resolver: () -> CGFloat)
+            case medium(insets: UIEdgeInsets)
+            case large(insets: UIEdgeInsets)
+            case custom(resolver: () -> Value)
         }
         let kind: Kind
     }
@@ -48,12 +65,6 @@ public class SheetView: SubviewHitTestOnlyView {
     public var onHeightChange: ((CGFloat) -> Void)?
     public var onDismiss: (() -> Void)?
     public var detents: [Detent] = [.medium(), .large()]
-    public var mediumSheetInsets: CGFloat = 6 {
-        didSet {
-            guard mediumSheetInsets != oldValue else { return }
-            setNeedsLayout()
-        }
-    }
 
     public var contentView: UIView {
         glassView.contentView
@@ -66,7 +77,7 @@ public class SheetView: SubviewHitTestOnlyView {
         addGestureRecognizer(panGR)
 
         glassView.cornerConfiguration = UICornerConfiguration.uniformEdges(
-            topRadius: 56,
+            topRadius: 40,
             bottomRadius: .containerConcentric()
         )
         glassView.contentView.cornerConfiguration = glassView.cornerConfiguration
@@ -169,29 +180,23 @@ public class SheetView: SubviewHitTestOnlyView {
     private func layoutGlassView() {
         guard bounds.height > 0, bounds.width > 0 else { return }
 
-        let largeSheetHeight = targetSheetHeight(detent: .large())
-        let mediumSheetHeight = targetSheetHeight(detent: .medium())
         let currentSheetHeight = currentSheetHeight
         let finalSheetHeight = currentSheetHeight.clamp(sheetHeightRange.lowerBound, sheetHeightRange.upperBound)
-
-        let detentRange = largeSheetHeight - mediumSheetHeight
-        let progress = detentRange > 0 ? ((largeSheetHeight - finalSheetHeight) / detentRange).clamp(0, 1) : 0
-        let insets: CGFloat = progress * mediumSheetInsets
         let top = bounds.height - min(currentSheetHeight, finalSheetHeight)
         let width = bounds.width
         let height = finalSheetHeight
-
-        let scaleX = width > 0 ? ((width - insets * 2) / width).clamp(0, 1) : 1
-        let scaleY = height > 0 ? ((height - insets) / height).clamp(0, 1) : 1
-        let unscaledY = top - (height * (1 - scaleY) / 2)
+        let insets = interpolatedInsets(forSheetHeight: finalSheetHeight)
+        let targetWidth = width - insets.left - insets.right
+        let scale = width > 0 ? (targetWidth / width).clamp(0, 1) : 1
+        let unscaledHeight = scale > 0 ? height / scale : 0
+        let targetMidX = insets.left + targetWidth / 2
+        let targetMidY = top + height / 2 + insets.top - insets.bottom
 
         glassView.frameWithoutTransform = CGRect(
-            x: 0,
-            y: unscaledY,
-            width: width,
-            height: height
+            center: CGPoint(x: targetMidX, y: targetMidY),
+            size: CGSize(width: width, height: unscaledHeight)
         )
-        glassView.transform = .identity.scaledBy(x: scaleX, y: scaleY)
+        glassView.transform = .identity.scaledBy(x: scale, y: scale)
 
         layoutGrabberView()
     }
@@ -206,17 +211,54 @@ public class SheetView: SubviewHitTestOnlyView {
         )
     }
 
-    private func targetSheetHeight(detent: Detent) -> CGFloat {
+    private func resolvedDetentValue(detent: Detent) -> Detent.Value {
         switch detent.kind {
-        case .medium:
-            return bounds.height * 0.5
-        case .large:
-            return bounds.height - safeAreaInsets.top
+        case .medium(let insets):
+            return .init(height: bounds.height * 0.5, insets: insets)
+        case .large(let insets):
+            return .init(height: bounds.height - safeAreaInsets.top, insets: insets)
         case .custom(let resolver):
             return resolver()
         }
     }
 
+    private func targetSheetHeight(detent: Detent) -> CGFloat {
+        resolvedDetentValue(detent: detent).height
+    }
+
+    private func interpolatedInsets(forSheetHeight sheetHeight: CGFloat) -> UIEdgeInsets {
+        let resolvedDetents = detents
+            .map { resolvedDetentValue(detent: $0) }
+            .sorted { $0.height < $1.height }
+
+        guard let first = resolvedDetents.first else {
+            return resolvedDetentValue(detent: .medium()).insets
+        }
+        guard let last = resolvedDetents.last else {
+            return first.insets
+        }
+
+        if sheetHeight <= first.height {
+            return first.insets
+        }
+        if sheetHeight >= last.height {
+            return last.insets
+        }
+
+        for index in 1..<resolvedDetents.count {
+            let lower = resolvedDetents[index - 1]
+            let upper = resolvedDetents[index]
+            guard sheetHeight <= upper.height else { continue }
+
+            let heightDelta = upper.height - lower.height
+            guard heightDelta > 0 else { return upper.insets }
+
+            let progress = ((sheetHeight - lower.height) / heightDelta).clamp(0, 1)
+            return lower.insets + (upper.insets - lower.insets) * progress
+        }
+
+        return last.insets
+    }
     @objc private func handlePan(gr: UIPanGestureRecognizer) {
         let translation = gr.translation(in: self).y
 
