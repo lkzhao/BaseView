@@ -68,6 +68,7 @@ public class SheetView: SubviewHitTestOnlyView {
 
     public lazy var panGR = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gr:)))
     public lazy var headerPanGR = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gr:)))
+    public var shadowView = EdgeShadowView()
     public var sheetCornerConfiguration: UICornerConfiguration {
         get { glassView.cornerConfiguration }
         set {
@@ -102,7 +103,14 @@ public class SheetView: SubviewHitTestOnlyView {
         )
         glassView.contentView.cornerConfiguration = glassView.cornerConfiguration
         glassView.contentView.clipsToBounds = true
-
+        shadowView.shadowColor = .red
+        shadowView.shadowRadius = 30
+        shadowView.shadowOpacity = 1.0
+        shadowView.shadowOffset = CGSize(width: 0, height: 20)
+        shadowView.cornerConfiguration = glassView.cornerConfiguration
+        shadowView.isUserInteractionEnabled = false
+        
+        addSubview(shadowView)
         addSubview(glassView)
 
         grabberView.backgroundColor = UIColor.secondaryLabel.withAlphaComponent(0.4)
@@ -221,6 +229,8 @@ public class SheetView: SubviewHitTestOnlyView {
             center: CGPoint(x: targetMidX, y: targetMidY),
             size: CGSize(width: width, height: unscaledHeight)
         )
+        shadowView.frameWithoutTransform = glassView.frameWithoutTransform
+        shadowView.transform = .identity.scaledBy(x: scale, y: scale)
         glassView.transform = .identity.scaledBy(x: scale, y: scale)
 
         layoutGrabberView()
