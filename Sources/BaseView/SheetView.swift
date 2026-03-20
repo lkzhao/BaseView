@@ -67,6 +67,7 @@ public class SheetView: SubviewHitTestOnlyView {
     }
 
     public lazy var panGR = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gr:)))
+    public lazy var headerPanGR = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gr:)))
     public var sheetCornerConfiguration: UICornerConfiguration {
         get { glassView.cornerConfiguration }
         set {
@@ -78,6 +79,7 @@ public class SheetView: SubviewHitTestOnlyView {
         get { !grabberView.isHidden }
         set { grabberView.isHidden = !newValue }
     }
+    public var headerHeight: CGFloat = 44
     public var onHeightChange: ((CGFloat) -> Void)?
     public var onDismiss: (() -> Void)?
     public var detents: [Detent] = [.medium(), .large()]
@@ -90,7 +92,9 @@ public class SheetView: SubviewHitTestOnlyView {
         super.viewDidLoad()
 
         panGR.delegate = self
+        headerPanGR.delegate = self
         addGestureRecognizer(panGR)
+        addGestureRecognizer(headerPanGR)
 
         glassView.cornerConfiguration = UICornerConfiguration.uniformEdges(
             topRadius: 40,
@@ -174,12 +178,7 @@ public class SheetView: SubviewHitTestOnlyView {
 
     // MARK: - Private
 
-    private var isDraggingSheet = true {
-        didSet {
-            guard oldValue != isDraggingSheet else { return }
-            trackedScrollView?.lockedToTop = isDraggingSheet
-        }
-    }
+    private var isDraggingSheet = true
 
     private var overrideSheetAbsoluteHeight: CGFloat? {
         didSet {
@@ -284,19 +283,24 @@ public class SheetView: SubviewHitTestOnlyView {
         case .began:
             sheetHeightAnimation.stop(resolveImmediately: true, postValueChanged: false)
             let trackedScrollOffset = trackedScrollView.map { $0.contentOffset.y + $0.adjustedContentInset.top } ?? 0
-            overrideSheetAbsoluteHeight = currentSheetAbsoluteHeight + trackedScrollOffset
+            if gr == headerPanGR {
+                overrideSheetAbsoluteHeight = currentSheetAbsoluteHeight
+            } else {
+                overrideSheetAbsoluteHeight = currentSheetAbsoluteHeight + trackedScrollOffset
+            }
             fallthrough
-
         case .changed:
             let target = currentSheetAbsoluteHeight - translation
             overrideSheetAbsoluteHeight = target
             isDraggingSheet = currentSheetAbsoluteHeight <= sheetAbsoluteHeightRange.upperBound
             gr.setTranslation(.zero, in: nil)
-
+            
+            if gr != headerPanGR {
+                trackedScrollView?.lockedToTop = isDraggingSheet
+            }
             if isDraggingSheet {
                 trackedScrollView?.panGestureRecognizer.setTranslation(.zero, in: nil)
             }
-
         default:
             let currentSheetAbsoluteHeight = currentSheetAbsoluteHeight
             if isDraggingSheet {
@@ -306,6 +310,10 @@ public class SheetView: SubviewHitTestOnlyView {
                     onDismiss()
                 } else {
                     let targetDetent = closestDetent(forSheetAbsoluteHeight: stopSheetAbsoluteHeight)
+                    
+                    if resolvedDetent(detent: targetDetent).absoluteHeight != detents.map({ resolvedDetent(detent: $0).absoluteHeight }).max(), let trackedScrollView {
+                        trackedScrollView.setContentOffset(CGPoint(x: -trackedScrollView.adjustedContentInset.left, y: -trackedScrollView.adjustedContentInset.top), animated: true)
+                    }
 
                     currentDetent = targetDetent
                     let finalSheetAbsoluteHeight = resolvedDetent(detent: targetDetent).absoluteHeight
@@ -366,10 +374,21 @@ public class SheetView: SubviewHitTestOnlyView {
 
 @available(iOS 26.0, *)
 extension SheetView: UIGestureRecognizerDelegate {
+    public override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard gestureRecognizer == headerPanGR else { return true }
+        let velocity = headerPanGR.velocity(in: self)
+        return headerPanGR.location(in: glassView).y < headerHeight && velocity.y > 0 && abs(velocity.y) > abs(velocity.x)
+    }
+
     public func gestureRecognizer(
-        _: UIGestureRecognizer,
+        _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
-        trackScrollView(from: otherGestureRecognizer)
+        guard gestureRecognizer != headerPanGR else { return false }
+        return trackScrollView(from: otherGestureRecognizer)
+    }
+    
+    public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        gestureRecognizer == headerPanGR
     }
 }
