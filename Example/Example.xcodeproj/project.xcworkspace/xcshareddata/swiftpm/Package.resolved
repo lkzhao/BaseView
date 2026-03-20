@@ -1,6 +1,15 @@
 {
-  "originHash" : "14ce4a02eb2c80c9a590109f66ab07db523c5ec81cbfedf220cf5b155c504151",
+  "originHash" : "df08e28769fc69ee52dc35d394b90a67bfc0c3a33a72020ab93674f1cc883908",
   "pins" : [
+    {
+      "identity" : "basetoolbox",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lkzhao/BaseToolbox",
+      "state" : {
+        "revision" : "a9cf2c5fa8fff80028a405f179a2af36c24faff4",
+        "version" : "0.8.0"
+      }
+    },
     {
       "identity" : "motion",
       "kind" : "remoteSourceControl",
@@ -62,6 +71,15 @@
       "state" : {
         "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
         "version" : "602.0.0"
+      }
+    },
+    {
+      "identity" : "uicomponent",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lkzhao/UIComponent",
+      "state" : {
+        "revision" : "319152baeea6afca3c1a6746496acf8216cede84",
+        "version" : "5.4.0"
       }
     }
   ],

@@ -57,6 +57,7 @@ private final class DemoRootView: BaseView {
         if showsCompactSheetContent {
             sheetView.contentView.componentEngine.component = Text("Tap to expand SheetView", font: .systemFont(ofSize: 18, weight: .semibold))
                 .textAlignment(.center)
+                .animator(FadeAnimator())
                 .inset(h: 20)
                 .fill()
         } else {
@@ -65,7 +66,10 @@ private final class DemoRootView: BaseView {
                 for i in 0...100 {
                     Text("Sheet Item \(i)", font: .systemFont(ofSize: 16))
                 }
-            }.inset(v: 30, h: 20).scrollView().fill()
+            }.inset(v: 30, h: 20)
+                .scrollView()
+                .animator(FadeAnimator())
+                .fill()
         }
     }
 
