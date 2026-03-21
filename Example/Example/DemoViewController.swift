@@ -186,20 +186,6 @@ private final class DemoRootView: BaseView {
                     .backgroundColor(.secondarySystemBackground)
             )
 
-            DemoCard(
-                title: "BackdropView",
-                detail: "Private CABackdropLayer wrapper with a blur overlay on top of BackgroundCirclesView.",
-                preview: ViewComponent<BackdropDemoView>()
-                    .size(width: .fill, height: 160)
-            )
-
-            DemoCard(
-                title: "Backdrop Filter Study",
-                detail: "Visualize the private filter stack pieces used by the active floating tab bar.",
-                preview: ViewComponent<BackdropFilterStudyView>()
-                    .measureSize(key: "backdrop")
-            )
-
             if #available(iOS 26.0, *) {
                 DemoCard(
                     title: "LensView",
@@ -235,6 +221,20 @@ private final class DemoRootView: BaseView {
                 detail: "CAShapeLayer-backed vector view with stroke and fill controls.",
                 preview: ViewComponent<BadgeShapeDemoView>()
                     .size(width: .fill, height: 84)
+            )
+            
+            DemoCard(
+                title: "BackdropView",
+                detail: "Private CABackdropLayer wrapper with a blur overlay.",
+                preview: ViewComponent<BackdropDemoView>()
+                    .size(width: .fill, height: 160)
+            )
+
+            DemoCard(
+                title: "Backdrop Filter Study",
+                detail: "Visualize the private filter stack pieces used by the active floating tab bar.",
+                preview: ViewComponent<BackdropFilterStudyView>()
+                    .measureSize(key: "backdrop")
             )
         }
         .inset(20)
