@@ -107,7 +107,7 @@ public class SheetView: SubviewHitTestOnlyView {
     }
 
     public var contentView: UIView {
-        glassView.contentView
+        sheetContentView
     }
 
     public override func viewDidLoad() {
@@ -119,6 +119,9 @@ public class SheetView: SubviewHitTestOnlyView {
         addGestureRecognizer(panGR)
         addGestureRecognizer(headerPanGR)
         addSubview(glassView)
+
+        sheetContentView.backgroundColor = .clear
+        glassView.contentView.addSubview(sheetContentView)
 
         grabberView.backgroundColor = UIColor.secondaryLabel.withAlphaComponent(0.4)
         grabberView.isUserInteractionEnabled = false
@@ -205,6 +208,7 @@ public class SheetView: SubviewHitTestOnlyView {
 
     private let grabberView = UIView()
     private let glassView = VisualEffectCardView()
+    private let sheetContentView = UIView()
     private let sheetHeightAnimation = SpringAnimation<CGFloat>()
     private let grabberSize = CGSize(width: 40, height: 6)
     private let grabberTopInset: CGFloat = 5
@@ -226,17 +230,24 @@ public class SheetView: SubviewHitTestOnlyView {
         let resolved = interpolatedDetent(forSheetAbsoluteHeight: finalSheetAbsoluteHeight)
         let height = resolved.height
         let insets = resolved.insets
-        let targetWidth = width - insets.left - insets.right
+        let targetWidth = max(0, width - insets.left - insets.right)
         let scale = width > 0 ? (targetWidth / width).clamp(0, 1) : 1
         let unscaledHeight = scale > 0 ? height / scale : 0
-        let targetMidX = insets.left + targetWidth / 2
-        let targetMidY = top + insets.top + height / 2
 
         glassView.frameWithoutTransform = CGRect(
-            center: CGPoint(x: targetMidX, y: targetMidY),
+            x: insets.left,
+            y: top + insets.top,
+            width: targetWidth,
+            height: height
+        )
+        glassView.transform = .identity
+
+        sheetContentView.frameWithoutTransform = CGRect(
+            center: glassView.contentView.bounds.center,
             size: CGSize(width: width, height: unscaledHeight)
         )
-        glassView.transform = .identity.scaledBy(x: scale, y: scale)
+        sheetContentView.transform = .identity.scaledBy(x: scale, y: scale)
+
         backgroundColor = resolved.backgroundColor
         glassView.visualEffectView.backgroundColor = resolved.sheetBackgroundColor
 
@@ -426,7 +437,7 @@ extension SheetView: UIGestureRecognizerDelegate {
     public override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         guard gestureRecognizer == headerPanGR else { return true }
         let velocity = headerPanGR.velocity(in: self)
-        return headerPanGR.location(in: glassView).y < headerHeight && velocity.y > 0 && abs(velocity.y) > abs(velocity.x)
+        return headerPanGR.location(in: sheetContentView).y < headerHeight && velocity.y > 0 && abs(velocity.y) > abs(velocity.x)
     }
 
     public func gestureRecognizer(
