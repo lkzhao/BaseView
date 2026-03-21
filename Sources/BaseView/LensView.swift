@@ -46,9 +46,14 @@ open class LensView: UIView {
         }
     }
 
-    /// Current lifted state reported by the private implementation.
+    private var _isLifted: Bool = false
+    
     open var isLifted: Bool {
-        (lensView?.value(forKey: ObfuscatedKeys.lifted) as? NSNumber)?.boolValue ?? false
+        get { _isLifted }
+        set {
+            guard newValue != _isLifted else { return }
+            setLifted(newValue, animated: false)
+        }
     }
 
     public override init(frame: CGRect) {
@@ -64,6 +69,12 @@ open class LensView: UIView {
     open override func layoutSubviews() {
         super.layoutSubviews()
         lensView?.frame = bounds
+        liftIfNeeded()
+    }
+    
+    open override func didMoveToWindow() {
+        super.didMoveToWindow()
+        liftIfNeeded()
     }
 
     /// Updates lifted state. Uses animated private API when available.
@@ -74,9 +85,10 @@ open class LensView: UIView {
         completion: (() -> Void)? = nil
     ) {
         guard let lensView else { return }
+        self._isLifted = lifted
 
         let animatedSelector = NSSelectorFromString(ObfuscatedKeys.setLiftedAnimatedAlongsideCompletion)
-        if lensView.responds(to: animatedSelector) {
+        if lensView.responds(to: animatedSelector), readyToLift {
             typealias SetLiftedFn = @convention(c) (AnyObject, Selector, Bool, Bool, AnyObject?, AnyObject?) -> Void
             let implementation = unsafeBitCast(lensView.method(for: animatedSelector), to: SetLiftedFn.self)
             let alongsideBlockObject = alongsideAnimations.map { animation -> AnyObject in
@@ -92,7 +104,9 @@ open class LensView: UIView {
             return
         }
 
-        lensView.setValue(lifted, forKey: ObfuscatedKeys.lifted)
+        if readyToLift {
+            lensView.setValue(lifted, forKey: ObfuscatedKeys.lifted)
+        }
         alongsideAnimations?()
         completion?()
     }
@@ -100,6 +114,20 @@ open class LensView: UIView {
     /// Convenience overload for the common lifted-state update path.
     open func setLifted(_ lifted: Bool, animated: Bool) {
         setLifted(lifted, animated: animated, alongsideAnimations: nil, completion: nil)
+    }
+    
+    private func liftIfNeeded() {
+        if isLifted, !_lensIsLifted, readyToLift {
+            setLifted(true, animated: false)
+        }
+    }
+    
+    private var _lensIsLifted: Bool {
+        (lensView?.value(forKey: ObfuscatedKeys.lifted) as? NSNumber)?.boolValue ?? false
+    }
+    
+    private var readyToLift: Bool {
+        window != nil
     }
 
     private func setupLensView() {

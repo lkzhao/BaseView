@@ -12,21 +12,13 @@ open class LoupeView: BaseView {
     @Proxy(\.lensView.style)
     open var style: LensView.Style
 
-    open var isActive = false {
-        didSet {
-            guard isActive != oldValue else { return }
-            updateLayout()
-            if isActive {
-                portalView.alpha = 1
-            }
-            lensView.setLifted(isActive, animated: true, alongsideAnimations: {
-                self.scaleView.transform = .identity.scaledBy(self.isActive ? 1.2 : 1)
-                self.portalView.transform = .identity.scaledBy(self.isActive ? 1.3 : 1)
-            }, completion: {
-                if !self.isActive {
-                    self.portalView.alpha = 0
-                }
-            })
+    private var _isLifted = false
+
+    open var isLifted: Bool {
+        get { _isLifted }
+        set {
+            guard newValue != _isLifted else { return }
+            setLifted(newValue, animated: false)
         }
     }
 
@@ -75,8 +67,40 @@ open class LoupeView: BaseView {
         setNeedsLayout()
     }
 
+    /// Updates lifted state while preserving the loupe's scale and portal transitions.
+    open func setLifted(
+        _ lifted: Bool,
+        animated: Bool,
+        alongsideAnimations: (() -> Void)? = nil,
+        completion: (() -> Void)? = nil
+    ) {
+        guard lifted != _isLifted else { return }
+        _isLifted = lifted
+
+        updateLayout()
+        if lifted {
+            portalView.alpha = 1
+        }
+
+        lensView.setLifted(lifted, animated: animated, alongsideAnimations: {
+            self.scaleView.transform = .identity.scaledBy(lifted ? 1.2 : 1)
+            self.portalView.transform = .identity.scaledBy(lifted ? 1.3 : 1)
+            alongsideAnimations?()
+        }, completion: {
+            if !self.isLifted {
+                self.portalView.alpha = 0
+            }
+            completion?()
+        })
+    }
+
+    /// Convenience overload for the common lifted-state update path.
+    open func setLifted(_ lifted: Bool, animated: Bool) {
+        setLifted(lifted, animated: animated, alongsideAnimations: nil, completion: nil)
+    }
+
     private func updateLayout() {
-        guard let superview else { return }
+        guard let superview, bounds.width > 0, bounds.height > 0 else { return }
         scaleView.frameWithoutTransform = bounds
         lensView.frameWithoutTransform = bounds
         portalContainerView.frameWithoutTransform = bounds

@@ -1507,7 +1507,6 @@ private final class DisplacementMapPreviewView: BaseView {
         rawTileView.layer.filters = [
             BackdropView.makeDisplacementMapFilter(amount: 1.25)
         ].compactMap { $0 }
-        hostedLensView.setLifted(true, animated: false)
     }
 
     override func layoutSubviews() {
@@ -1739,10 +1738,10 @@ private final class LoupeDemoView: BaseView {
         switch gesture.state {
         case .began, .changed:
             let local = gesture.location(in: self)
-            loupeView.isActive = bounds.contains(local)
+            loupeView.setLifted(bounds.contains(local), animated: true)
             loupeView.frameWithoutTransform = CGRect(center: local, size: CGSize(width: 120, height: 120))
         default:
-            loupeView.isActive = false
+            loupeView.setLifted(false, animated: true)
         }
     }
 }
