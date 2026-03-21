@@ -1,8 +1,22 @@
 import UIKit
 import BaseToolbox
 
-/// Rounded visual-effect card that falls back to a manual edge shadow before iOS 26.
+/// Rounded visual-effect card with a pre-iOS 26 edge-shadow fallback and optional shadow override.
 open class VisualEffectCardView: BaseView {
+    public struct ShadowConfiguration {
+        public var color: UIColor
+        public var opacity: CGFloat
+        public var radius: CGFloat
+        public var offset: CGSize
+
+        public init(color: UIColor, opacity: CGFloat, radius: CGFloat, offset: CGSize) {
+            self.color = color
+            self.opacity = opacity
+            self.radius = radius
+            self.offset = offset
+        }
+    }
+
     public let visualEffectView: UIVisualEffectView
     public let shadowView = EdgeShadowView()
 
@@ -13,6 +27,12 @@ open class VisualEffectCardView: BaseView {
     open var effect: UIVisualEffect? {
         get { visualEffectView.effect }
         set { visualEffectView.effect = newValue }
+    }
+
+    open var shadowConfiguration: ShadowConfiguration? {
+        didSet {
+            setNeedsUpdateProperties()
+        }
     }
 
     public override init(frame: CGRect) {
@@ -47,10 +67,6 @@ open class VisualEffectCardView: BaseView {
         visualEffectView.contentView.clipsToBounds = true
 
         shadowView.isUserInteractionEnabled = false
-        shadowView.shadowColor = UIColor.black.withAlphaComponent(0.25)
-        shadowView.shadowOpacity = 1
-        shadowView.shadowRadius = 24
-        shadowView.shadowOffset = CGSize(width: 0, height: 6)
 
         addSubview(shadowView)
         addSubview(visualEffectView)
@@ -77,12 +93,31 @@ open class VisualEffectCardView: BaseView {
         return true
     }
 
+    private var shouldShowShadowView: Bool {
+        shadowConfiguration != nil || usesManualShadowFallback
+    }
+
+    private var resolvedShadowConfiguration: ShadowConfiguration {
+        shadowConfiguration ?? ShadowConfiguration(
+            color: UIColor.black.withAlphaComponent(0.25),
+            opacity: 1,
+            radius: 24,
+            offset: CGSize(width: 0, height: 6)
+        )
+    }
+
     private func syncCardPresentation() {
         let clipsVisualEffectView = usesManualShadowFallback
+        let shadowConfiguration = resolvedShadowConfiguration
 
-        shadowView.isHidden = !usesManualShadowFallback
+        shadowView.isHidden = !shouldShowShadowView
         visualEffectView.clipsToBounds = clipsVisualEffectView
-        
+
+        shadowView.shadowColor = shadowConfiguration.color
+        shadowView.shadowOpacity = shadowConfiguration.opacity
+        shadowView.shadowRadius = shadowConfiguration.radius
+        shadowView.shadowOffset = shadowConfiguration.offset
+
         let cornerRadius = min(min(bounds.height / 2, bounds.width / 2), cornerRadius)
 
         visualEffectView.cornerRadius = cornerRadius

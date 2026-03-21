@@ -4,6 +4,7 @@ import BaseToolbox
 
 /// Draggable bottom sheet view with detents and scroll-view coordination.
 public class SheetView: SubviewHitTestOnlyView {
+    public typealias ShadowConfiguration = VisualEffectCardView.ShadowConfiguration
 
     public struct Detent: Equatable, Identifiable {
 
@@ -83,6 +84,10 @@ public class SheetView: SubviewHitTestOnlyView {
     public var onHeightChange: ((CGFloat) -> Void)?
     public var onDismiss: (() -> Void)?
     public var detents: [Detent] = [.medium(), .large()]
+    public var sheetShadowConfiguration: ShadowConfiguration? {
+        get { glassView.shadowConfiguration }
+        set { glassView.shadowConfiguration = newValue }
+    }
 
     public var contentView: UIView {
         glassView.contentView
