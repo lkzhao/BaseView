@@ -21,14 +21,23 @@ public class SheetView: SubviewHitTestOnlyView {
         public struct Resolved {
             public let height: CGFloat
             public let insets: UIEdgeInsets
+            public let backgroundColor: UIColor?
+            public let sheetBackgroundColor: UIColor?
 
             public var absoluteHeight: CGFloat {
                 height + insets.top + insets.bottom
             }
 
-            public init(height: CGFloat, insets: UIEdgeInsets = .zero) {
+            public init(
+                height: CGFloat,
+                insets: UIEdgeInsets = .zero,
+                backgroundColor: UIColor? = nil,
+                sheetBackgroundColor: UIColor? = nil
+            ) {
                 self.height = height
                 self.insets = insets
+                self.backgroundColor = backgroundColor
+                self.sheetBackgroundColor = sheetBackgroundColor
             }
         }
 
@@ -36,13 +45,21 @@ public class SheetView: SubviewHitTestOnlyView {
 
         public static func medium() -> Detent {
             Detent(id: "medium") { context in
-                Resolved(height: context.bounds.height * 0.5, insets: UIEdgeInsets(left: 6, bottom: 6, right: 6))
+                Resolved(
+                    height: context.bounds.height * 0.5,
+                    insets: UIEdgeInsets(left: 6, bottom: 6, right: 6)
+                )
             }
         }
 
         public static func large() -> Detent {
             Detent(id: "large") { context in
-                Resolved(height: context.bounds.height - context.safeAreaInsets.top, insets: .zero)
+                Resolved(
+                    height: context.bounds.height - context.safeAreaInsets.top,
+                    backgroundColor: .init(dark: .black.withAlphaComponent(0.4),
+                                           light: .black.withAlphaComponent(0.2)),
+                    sheetBackgroundColor: .systemBackground
+                )
             }
         }
 
@@ -96,6 +113,7 @@ public class SheetView: SubviewHitTestOnlyView {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
+        traitOverrides.userInterfaceLevel = .elevated
         panGR.delegate = self
         headerPanGR.delegate = self
         addGestureRecognizer(panGR)
@@ -219,6 +237,8 @@ public class SheetView: SubviewHitTestOnlyView {
             size: CGSize(width: width, height: unscaledHeight)
         )
         glassView.transform = .identity.scaledBy(x: scale, y: scale)
+        backgroundColor = resolved.backgroundColor
+        glassView.visualEffectView.backgroundColor = resolved.sheetBackgroundColor
 
         layoutGrabberView()
     }
@@ -267,12 +287,45 @@ public class SheetView: SubviewHitTestOnlyView {
             let progress = ((sheetAbsoluteHeight - lower.absoluteHeight) / heightDelta).clamp(0, 1)
             return .init(
                 height: lower.height + (upper.height - lower.height) * progress,
-                insets: lower.insets + (upper.insets - lower.insets) * progress
+                insets: lower.insets + (upper.insets - lower.insets) * progress,
+                backgroundColor: interpolatedColor(
+                    from: lower.backgroundColor,
+                    to: upper.backgroundColor,
+                    progress: progress
+                ),
+                sheetBackgroundColor: interpolatedColor(
+                    from: lower.sheetBackgroundColor,
+                    to: upper.sheetBackgroundColor,
+                    progress: progress
+                )
             )
         }
 
         return last
     }
+
+    private func interpolatedColor(from start: UIColor?, to end: UIColor?, progress: CGFloat) -> UIColor? {
+        let progress = progress.clamp(0, 1)
+
+        if progress <= 0 {
+            return start
+        }
+        if progress >= 1 {
+            return end
+        }
+
+        switch (start, end) {
+        case let (start?, end?):
+            return lerp(from: start, to: end, progress: progress)
+        case let (start?, nil):
+            return lerp(from: start, to: start.withAlphaComponent(0), progress: progress)
+        case let (nil, end?):
+            return lerp(from: end.withAlphaComponent(0), to: end, progress: progress)
+        case (nil, nil):
+            return nil
+        }
+    }
+
     @objc private func handlePan(gr: UIPanGestureRecognizer) {
         let translation = gr.translation(in: self).y
 

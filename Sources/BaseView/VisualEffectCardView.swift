@@ -99,7 +99,7 @@ open class VisualEffectCardView: BaseView {
 
     private var resolvedShadowConfiguration: ShadowConfiguration {
         shadowConfiguration ?? ShadowConfiguration(
-            color: UIColor.black.withAlphaComponent(0.25),
+            color: UIColor.black.withAlphaComponent(0.2),
             opacity: 1,
             radius: 24,
             offset: CGSize(width: 0, height: 6)
