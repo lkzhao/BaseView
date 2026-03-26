@@ -65,6 +65,17 @@ open class EdgeShadowView: BaseView {
     private static let continuousCurve3Control1: CGFloat = 0.86840701
     private static let continuousCurve3Control2: CGFloat = 1.08849299
     private let centerMaskView = ShapeView()
+    
+    public var shadowExpansionInsets: UIEdgeInsets?
+    public var contentView: UIView? {
+        didSet {
+            guard contentView != oldValue else { return }
+            oldValue?.removeFromSuperview()
+            if let contentView {
+                addSubview(contentView)
+            }
+        }
+    }
 
     public override func viewDidLoad() {
         super.viewDidLoad()
@@ -88,6 +99,7 @@ open class EdgeShadowView: BaseView {
 
     open override func layoutSubviews() {
         super.layoutSubviews()
+        contentView?.frameWithoutTransform = bounds
         updateShadowGeometry()
     }
 
@@ -100,7 +112,8 @@ open class EdgeShadowView: BaseView {
 
         let innerPath = resolvedRoundedPath(in: bounds)
         shadowPath = innerPath
-        let maskFrame = bounds.inset(by: shadowExpansionInsets.inverted)
+        let insets = shadowExpansionInsets ?? defaultShadowExpansionInsets
+        let maskFrame = bounds.inset(by: insets.inverted)
         centerMaskView.frameWithoutTransform = maskFrame
         centerMaskView.path = cutoutPath(around: innerPath, in: maskFrame)
     }
@@ -113,7 +126,7 @@ open class EdgeShadowView: BaseView {
         return cutoutPath
     }
 
-    private var shadowExpansionInsets: UIEdgeInsets {
+    private var defaultShadowExpansionInsets: UIEdgeInsets {
         let blurInset = max(0, shadowRadius) * 2
         return UIEdgeInsets(
             top: blurInset + max(0, -shadowOffset.height),
