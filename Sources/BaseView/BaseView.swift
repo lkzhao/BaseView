@@ -44,6 +44,11 @@ open class BaseView: UIView {
         }
     }
 
+    open override func safeAreaInsetsDidChange() {
+        super.safeAreaInsetsDidChange()
+        setNeedsUpdateProperties()
+    }
+
     private var _isInPreLayout = false
     private var _needsUpdateProperties = false
 
