@@ -36,10 +36,14 @@ open class VisualEffectCardView: BaseView {
     }
 
     public override init(frame: CGRect) {
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, tvOS 26.0, *) {
             visualEffectView = UIVisualEffectView(effect: UIGlassEffect(style: .regular).with(\.isInteractive, value: true))
         } else {
+            #if os(tvOS)
+            visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .regular))
+            #else
             visualEffectView = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+            #endif
         }
         super.init(frame: frame)
     }
@@ -54,7 +58,7 @@ open class VisualEffectCardView: BaseView {
         backgroundColor = .clear
         clipsToBounds = false
         
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, tvOS 26.0, *) {
             cornerConfiguration = UICornerConfiguration.uniformEdges(
                 topRadius: 40,
                 bottomRadius: .containerConcentric(minimum: 30)
@@ -87,7 +91,7 @@ open class VisualEffectCardView: BaseView {
     }
 
     private var usesManualShadowFallback: Bool {
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, tvOS 26.0, *) {
             return false
         }
         return true
@@ -132,7 +136,7 @@ open class VisualEffectCardView: BaseView {
         shadowView.cornerCurve = cornerCurve
         shadowView.maskedCorners = maskedCorners
 
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, tvOS 26.0, *) {
             let currentCornerConfiguration = cornerConfiguration
             visualEffectView.cornerConfiguration = currentCornerConfiguration
             visualEffectView.contentView.cornerConfiguration = currentCornerConfiguration

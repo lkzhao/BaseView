@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/lkzhao/BaseToolbox",
       "state" : {
-        "revision" : "a9cf2c5fa8fff80028a405f179a2af36c24faff4",
-        "version" : "0.8.0"
+        "revision" : "a0f260d8d475b611e80d776748da2691739e7c05",
+        "version" : "0.8.1"
       }
     },
     {

@@ -58,7 +58,7 @@ public class SheetView: SubviewHitTestOnlyView {
                     height: context.bounds.height - context.safeAreaInsets.top,
                     backgroundColor: .init(dark: .black.withAlphaComponent(0.4),
                                            light: .black.withAlphaComponent(0.2)),
-                    sheetBackgroundColor: .systemBackground
+                    sheetBackgroundColor: defaultLargeSheetBackgroundColor
                 )
             }
         }
@@ -77,6 +77,14 @@ public class SheetView: SubviewHitTestOnlyView {
 
         private let resolver: (Context) -> Resolved
 
+        private static var defaultLargeSheetBackgroundColor: UIColor {
+            #if os(tvOS)
+            .black
+            #else
+            .systemBackground
+            #endif
+        }
+
         private init(id: String, resolver: @escaping (Context) -> Resolved) {
             self.id = id
             self.resolver = resolver
@@ -85,7 +93,7 @@ public class SheetView: SubviewHitTestOnlyView {
 
     public lazy var panGR = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gr:)))
     public lazy var headerPanGR = UIPanGestureRecognizer(target: self, action: #selector(handlePan(gr:)))
-    @available(iOS 26.0, *)
+    @available(iOS 26.0, tvOS 26.0, *)
     public var sheetCornerConfiguration: UICornerConfiguration {
         get { glassView.cornerConfiguration }
         set {
@@ -113,7 +121,9 @@ public class SheetView: SubviewHitTestOnlyView {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
+        #if !os(tvOS)
         traitOverrides.userInterfaceLevel = .elevated
+        #endif
         panGR.delegate = self
         headerPanGR.delegate = self
         addGestureRecognizer(panGR)

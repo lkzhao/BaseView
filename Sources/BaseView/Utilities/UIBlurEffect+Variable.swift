@@ -10,7 +10,11 @@ public extension UIBlurEffect {
     }
 
     static func effectWithBlurRadius(_ blurRadius: CGFloat) -> UIBlurEffect {
+        #if os(tvOS)
+        PrivateBlurEffectFactory.effectWithBlurRadius(blurRadius) ?? UIBlurEffect(style: .regular)
+        #else
         PrivateBlurEffectFactory.effectWithBlurRadius(blurRadius) ?? UIBlurEffect(style: .systemMaterial)
+        #endif
     }
 
     static func effectWithVariableBlurRadius(_ blurRadius: CGFloat, imageMask: UIImage) -> UIBlurEffect {

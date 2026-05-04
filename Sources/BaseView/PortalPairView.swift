@@ -125,7 +125,7 @@ open class PortalPairView: UIView {
     private func synchronizeContainerValues(with sourceView: UIView) {
         containerView.clipsToBounds = sourceView.clipsToBounds
 
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, tvOS 26.0, *) {
             containerView.cornerConfiguration = sourceView.cornerConfiguration
         } else {
             containerView.layer.cornerRadius = sourceView.layer.cornerRadius
