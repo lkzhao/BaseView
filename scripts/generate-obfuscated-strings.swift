@@ -104,11 +104,9 @@ for path in sortedPaths {
     output += "\(indent)enum \(path.joined(separator: "_")) {\n"
     for constant in (grouped[path] ?? []).sorted(by: { $0.name < $1.name }) {
         let key = stableKey(for: constant)
-        let byteList = encodedBytes(for: constant.value, key: key)
-            .map(String.init)
-            .joined(separator: ", ")
+        let base64 = Data(encodedBytes(for: constant.value, key: key)).base64EncodedString()
         let keyLiteral = String(format: "0x%02X", key)
-        output += "\(indent)    static let \(constant.name) = ObfuscatedString.decode([\(byteList)], key: \(keyLiteral))\n"
+        output += "\(indent)    static let \(constant.name) = ObfuscatedString.decode(\"\(base64)\", key: \(keyLiteral))\n"
     }
     output += "\(indent)}\n\n"
 }
