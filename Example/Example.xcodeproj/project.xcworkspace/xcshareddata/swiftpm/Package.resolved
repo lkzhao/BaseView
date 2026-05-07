@@ -1,13 +1,13 @@
 {
-  "originHash" : "df08e28769fc69ee52dc35d394b90a67bfc0c3a33a72020ab93674f1cc883908",
+  "originHash" : "40e6ff7082261f1eb381bdc2494eebc755aa2aee62a10c0911fd9f8edc9c3fdd",
   "pins" : [
     {
       "identity" : "basetoolbox",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/lkzhao/BaseToolbox",
       "state" : {
-        "revision" : "a9cf2c5fa8fff80028a405f179a2af36c24faff4",
-        "version" : "0.8.0"
+        "revision" : "a0f260d8d475b611e80d776748da2691739e7c05",
+        "version" : "0.8.1"
       }
     },
     {
@@ -20,57 +20,12 @@
       }
     },
     {
-      "identity" : "obfuscatemacro",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/p-x9/ObfuscateMacro.git",
-      "state" : {
-        "revision" : "933cf203cfea5fb79b11363d2928bfa54284478e",
-        "version" : "0.14.0"
-      }
-    },
-    {
-      "identity" : "swift-algorithms",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-algorithms",
-      "state" : {
-        "revision" : "87e50f483c54e6efd60e885f7f5aa946cee68023",
-        "version" : "1.2.1"
-      }
-    },
-    {
-      "identity" : "swift-asn1",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-asn1.git",
-      "state" : {
-        "revision" : "810496cf121e525d660cd0ea89a758740476b85f",
-        "version" : "1.5.1"
-      }
-    },
-    {
-      "identity" : "swift-crypto",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-crypto.git",
-      "state" : {
-        "revision" : "6f70fa9eab24c1fd982af18c281c4525d05e3095",
-        "version" : "4.2.0"
-      }
-    },
-    {
       "identity" : "swift-numerics",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-numerics.git",
       "state" : {
         "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
         "version" : "1.1.1"
-      }
-    },
-    {
-      "identity" : "swift-syntax",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swiftlang/swift-syntax.git",
-      "state" : {
-        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
-        "version" : "602.0.0"
       }
     },
     {
