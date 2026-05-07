@@ -1,18 +1,9 @@
 import UIKit
-import ObfuscateMacro
 
 /// Wrapper around private `_UILiquidLensView` with a safe fallback when unavailable.
 @available(iOS 26.0, *)
 open class LensView: UIView {
-    private enum ObfuscatedKeys {
-        static let liquidLensClass = #ObfuscatedString("_UILiquidLensView")
-        static let style = #ObfuscatedString("style")
-        static let flexInteraction = #ObfuscatedString("flexInteraction")
-        static let restingBackgroundColor = #ObfuscatedString("restingBackgroundColor")
-        static let belowGlassWarpBackdrop = #ObfuscatedString("belowGlassWarpBackdrop")
-        static let lifted = #ObfuscatedString("lifted")
-        static let setLiftedAnimatedAlongsideCompletion = #ObfuscatedString("setLifted:animated:alongsideAnimations:completion:")
-    }
+    private typealias ObfuscatedKeys = BaseViewObfuscatedKeys.LensView
 
     internal var lensView: UIView?
 

@@ -1,32 +1,8 @@
 import UIKit
-import ObfuscateMacro
 
 /// View backed by private `CABackdropLayer` with a safe `CALayer` fallback when unavailable.
 open class BackdropView: BaseView {
-    private enum ObfuscatedKeys {
-        static let backdropLayerClass = #ObfuscatedString("CABackdropLayer")
-        static let filterClass = #ObfuscatedString("CAFilter")
-        static let filterWithType = #ObfuscatedString("filterWithType:")
-        static let gaussianBlur = #ObfuscatedString("gaussianBlur")
-        static let colorMatrix = #ObfuscatedString("colorMatrix")
-        static let vibrantColorMatrix = #ObfuscatedString("vibrantColorMatrix")
-        static let displacementMap = #ObfuscatedString("displacementMap")
-        static let opacityPair = #ObfuscatedString("opacityPair")
-        static let inputRadius = #ObfuscatedString("inputRadius")
-        static let inputNormalizeEdges = #ObfuscatedString("inputNormalizeEdges")
-        static let inputColorMatrix = #ObfuscatedString("inputColorMatrix")
-        static let inputAmount = #ObfuscatedString("inputAmount")
-        static let enabled = #ObfuscatedString("enabled")
-        static let allowsInPlaceFiltering = #ObfuscatedString("allowsInPlaceFiltering")
-        static let scale = #ObfuscatedString("scale")
-        static let bleedAmount = #ObfuscatedString("bleedAmount")
-        static let marginWidth = #ObfuscatedString("marginWidth")
-        static let windowServerAware = #ObfuscatedString("windowServerAware")
-        static let ignoresScreenClip = #ObfuscatedString("ignoresScreenClip")
-        static let ignoresOffscreenGroups = #ObfuscatedString("ignoresOffscreenGroups")
-        static let reducesCaptureBitDepth = #ObfuscatedString("reducesCaptureBitDepth")
-        static let backdropRect = #ObfuscatedString("backdropRect")
-    }
+    private typealias ObfuscatedKeys = BaseViewObfuscatedKeys.BackdropView
 
     private static let resolvedBackdropLayerClass: AnyClass = NSClassFromString(ObfuscatedKeys.backdropLayerClass) ?? CALayer.self
 

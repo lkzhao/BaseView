@@ -16,12 +16,11 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/lkzhao/BaseToolbox", from: "0.8.1"),
-        .package(url: "https://github.com/p-x9/ObfuscateMacro.git", from: "0.14.0"),
         .package(url: "https://github.com/b3ll/Motion", from: "0.1.5"),
     ],
     targets: [
         .target(
             name: "BaseView",
-            dependencies: ["BaseToolbox", "ObfuscateMacro", "Motion"])
+            dependencies: ["BaseToolbox", "Motion"])
     ]
 )

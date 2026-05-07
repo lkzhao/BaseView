@@ -1,18 +1,9 @@
 import UIKit
 import BaseToolbox
-import ObfuscateMacro
 
 /// View that mirrors another view.
 open class PortalView: UIView {
-    private enum ObfuscatedKeys {
-        static let portalClass = #ObfuscatedString("_UIPortalView")
-        static let sourceView = #ObfuscatedString("sourceView")
-        static let hidesSourceView = #ObfuscatedString("hidesSourceView")
-        static let matchesAlpha = #ObfuscatedString("matchesAlpha")
-        static let matchesTransform = #ObfuscatedString("matchesTransform")
-        static let matchesPosition = #ObfuscatedString("matchesPosition")
-        static let hidesSourceLayerInOtherPortals = #ObfuscatedString("hidesSourceLayerInOtherPortals")
-    }
+    private typealias ObfuscatedKeys = BaseViewObfuscatedKeys.PortalView
 
     internal var portalView: UIView?
 

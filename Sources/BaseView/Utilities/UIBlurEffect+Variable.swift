@@ -1,5 +1,4 @@
 import UIKit
-import ObfuscateMacro
 
 public extension UIBlurEffect {
     enum Direction {
@@ -35,11 +34,7 @@ public extension UIBlurEffect {
 }
 
 private enum PrivateBlurEffectFactory {
-    private enum Keys {
-        static let blurEffectClass = #ObfuscatedString("UIBlurEffect")
-        static let effectWithBlurRadius = #ObfuscatedString("effectWithBlurRadius:")
-        static let effectWithVariableBlurRadiusImageMask = #ObfuscatedString("effectWithVariableBlurRadius:imageMask:")
-    }
+    private typealias Keys = BaseViewObfuscatedKeys.PrivateBlurEffectFactory
 
     static func makeVariableMaskImage(
         direction: UIBlurEffect.Direction,
