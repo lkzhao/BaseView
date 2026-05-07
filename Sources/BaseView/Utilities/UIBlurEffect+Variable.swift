@@ -34,11 +34,7 @@ public extension UIBlurEffect {
 }
 
 private enum PrivateBlurEffectFactory {
-    private enum Keys {
-        static let blurEffectClass = ObfuscatedString.decode([94, 99, 11, 4, 242, 212, 128, 130, 101, 71, 34, 20], key: 0x66)
-        static let effectWithBlurRadius = ObfuscatedString.decode([29, 241, 208, 176, 151, 103, 101, 56, 4, 231, 236, 161, 153, 121, 120, 40, 12, 238, 211, 182, 222], key: 0xD3)
-        static let effectWithVariableBlurRadiusImageMask = ObfuscatedString.decode([163, 131, 98, 70, 33, 21, 215, 246, 202, 181, 170, 122, 72, 48, 25, 245, 218, 176, 182, 127, 71, 35, 34, 238, 202, 164, 153, 120, 16, 32, 5, 230, 193, 160, 169, 98, 81, 42, 90], key: 0x21)
-    }
+    private typealias Keys = BaseViewObfuscatedKeys.PrivateBlurEffectFactory
 
     static func makeVariableMaskImage(
         direction: UIBlurEffect.Direction,

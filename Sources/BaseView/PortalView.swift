@@ -3,15 +3,7 @@ import BaseToolbox
 
 /// View that mirrors another view.
 open class PortalView: UIView {
-    private enum ObfuscatedKeys {
-        static let portalClass = ObfuscatedString.decode([244, 159, 160, 88, 72, 52, 17, 229, 207, 148, 136, 101, 104], key: 0x06)
-        static let sourceView = ObfuscatedString.decode([227, 192, 187, 159, 111, 78, 28, 0, 237, 208], key: 0xEB)
-        static let hidesSourceView = ObfuscatedString.decode([137, 105, 123, 91, 46, 47, 244, 207, 171, 155, 114, 96, 60, 17, 228], key: 0x3C)
-        static let matchesAlpha = ObfuscatedString.decode([59, 20, 224, 208, 186, 148, 99, 110, 34, 29, 228, 202], key: 0xB1)
-        static let matchesTransform = ObfuscatedString.decode([23, 248, 204, 180, 158, 112, 71, 7, 0, 240, 222, 188, 136, 98, 94, 38], key: 0xD5)
-        static let matchesPosition = ObfuscatedString.decode([111, 64, 52, 60, 22, 248, 207, 139, 149, 106, 81, 35, 31, 250, 218], key: 0x5D)
-        static let hidesSourceLayerInOtherPortals = ObfuscatedString.decode([107, 75, 37, 5, 12, 205, 210, 169, 137, 121, 92, 20, 22, 239, 208, 166, 186, 124, 126, 36, 7, 235, 223, 156, 132, 120, 93, 41, 11, 245], key: 0x5E)
-    }
+    private typealias ObfuscatedKeys = BaseViewObfuscatedKeys.PortalView
 
     internal var portalView: UIView?
 

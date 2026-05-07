@@ -3,15 +3,7 @@ import UIKit
 /// Wrapper around private `_UILiquidLensView` with a safe fallback when unavailable.
 @available(iOS 26.0, *)
 open class LensView: UIView {
-    private enum ObfuscatedKeys {
-        static let liquidLensClass = ObfuscatedString.decode([35, 206, 243, 149, 145, 102, 67, 60, 16, 223, 215, 191, 131, 89, 71, 40, 27], key: 0xD7)
-        static let style = ObfuscatedString.decode([69, 33, 13, 255, 215], key: 0x91)
-        static let flexInteraction = ObfuscatedString.decode([145, 122, 80, 44, 58, 252, 197, 181, 157, 111, 78, 56, 2, 229, 199], key: 0x52)
-        static let restingBackgroundColor = ObfuscatedString.decode([59, 13, 244, 210, 172, 138, 100, 96, 32, 3, 20, 249, 207, 179, 142, 116, 93, 27, 24, 250, 218, 166], key: 0xA4)
-        static let belowGlassWarpBackdrop = ObfuscatedString.decode([67, 37, 51, 17, 234, 251, 183, 155, 106, 75, 0, 23, 231, 196, 145, 147, 114, 91, 43, 28, 226, 220], key: 0x7C)
-        static let lifted = ObfuscatedString.decode([226, 196, 170, 159, 111, 77], key: 0xE9)
-        static let setLiftedAnimatedAlongsideCompletion = ObfuscatedString.decode([78, 57, 15, 214, 208, 190, 131, 115, 81, 110, 18, 252, 216, 189, 142, 122, 72, 40, 81, 235, 197, 167, 137, 97, 86, 45, 7, 231, 224, 174, 182, 147, 124, 72, 50, 21, 247, 203, 237, 149, 122, 89, 35, 30, 244, 196, 166, 129, 99, 22], key: 0x98)
-    }
+    private typealias ObfuscatedKeys = BaseViewObfuscatedKeys.LensView
 
     internal var lensView: UIView?
 
