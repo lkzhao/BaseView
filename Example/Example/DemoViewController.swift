@@ -173,8 +173,7 @@ private final class DemoRootView: BaseView {
                             baseColor: .systemBlue,
                             highlightColor: .systemPurple
                         )
-                        GlassLavaButtonExample(
-                            title: "Save",
+                        GlassLavaIconButtonExample(
                             symbolName: "bookmark.fill",
                             baseColor: .systemGreen
                         )
@@ -294,6 +293,32 @@ private struct GlassLavaButtonExample: ComponentBuilder {
     }
 }
 
+private struct GlassLavaIconButtonExample: ComponentBuilder {
+    let symbolName: String
+    let baseColor: UIColor
+    let highlightColor: UIColor?
+
+    init(symbolName: String, baseColor: UIColor, highlightColor: UIColor? = nil) {
+        self.symbolName = symbolName
+        self.baseColor = baseColor
+        self.highlightColor = highlightColor
+    }
+
+    func build() -> some Component {
+        ZStack {
+            Image(
+                systemName: symbolName,
+                withConfiguration: UIImage.SymbolConfiguration(font: .boldSystemFont(ofSize: 22))
+            )
+            .tintColor(.white)
+        }
+        .size(52)
+        .view(as: LavaLampView.self)
+        .with(\.fieldView.baseColor, baseColor)
+        .with(\.fieldView.highlightColor, highlightColor)
+    }
+}
+
 class LavaLampView: BaseView, ViewWrapperComponentView {
     let fieldView = LavaLampBlobFieldView()
     let glassView = UIVisualEffectView(effect: demoClearGlassEffect())
@@ -401,6 +426,7 @@ final class LavaLampBlobFieldView: BaseView {
     let outerShadowView = UIView()
     let innerShadowView = UIView()
     let clippedContentView = UIView()
+    let lavaContentView = UIView()
     let baseGradientView = GradientView()
     var baseColor: UIColor = UIColor(red: 0.98, green: 0.62, blue: 0.02, alpha: 1.0) {
         didSet {
@@ -412,6 +438,7 @@ final class LavaLampBlobFieldView: BaseView {
             updateDerivedColors()
         }
     }
+    private let lavaContentAspectRatio: CGFloat = 3.35
     private let blobConfigurations: [BlobOrbitConfiguration] = [
         BlobOrbitConfiguration(
             size: CGSize(width: 0.72, height: 2.38),
@@ -484,13 +511,15 @@ final class LavaLampBlobFieldView: BaseView {
         clippedContentView.clipsToBounds = true
         innerShadowView.addSubview(clippedContentView)
 
+        clippedContentView.addSubview(lavaContentView)
+
         baseGradientView.locations = [0, 0.5, 1]
         baseGradientView.startPoint = CGPoint(x: 0, y: 0.5)
         baseGradientView.endPoint = CGPoint(x: 1, y: 0.5)
-        clippedContentView.addSubview(baseGradientView)
+        lavaContentView.addSubview(baseGradientView)
 
         for blob in blobs {
-            clippedContentView.addSubview(blob)
+            lavaContentView.addSubview(blob)
         }
 
         updateDerivedColors()
@@ -517,10 +546,14 @@ final class LavaLampBlobFieldView: BaseView {
         outerShadowView.layer.shadowPath = shadowPath
         innerShadowView.layer.shadowPath = shadowPath
 
-        baseGradientView.frameWithoutTransform = clippedContentView.bounds
+        lavaContentView.frameWithoutTransform = aspectFillFrame(
+            in: clippedContentView.bounds,
+            aspectRatio: lavaContentAspectRatio
+        )
+        baseGradientView.frameWithoutTransform = lavaContentView.bounds
 
-        if animationBoundsSize != bounds.size {
-            animationBoundsSize = bounds.size
+        if animationBoundsSize != lavaContentView.bounds.size {
+            animationBoundsSize = lavaContentView.bounds.size
             hasStartedAnimations = false
             for blob in blobs {
                 blob.layer.removeAnimation(forKey: "lavaLamp")
@@ -529,12 +562,12 @@ final class LavaLampBlobFieldView: BaseView {
 
         for (blob, configuration) in zip(blobs, blobConfigurations) {
             let size = CGSize(
-                width: clippedContentView.bounds.width * configuration.size.width,
-                height: clippedContentView.bounds.height * configuration.size.height
+                width: lavaContentView.bounds.width * configuration.size.width,
+                height: lavaContentView.bounds.height * configuration.size.height
             )
             let origin = pointOnOrbit(
                 around: resolvedOrbitCenter(for: configuration),
-                radius: clippedContentView.bounds.width * configuration.orbitRadiusMultiplier,
+                radius: lavaContentView.bounds.width * configuration.orbitRadiusMultiplier,
                 angle: configuration.startAngle
             )
             blob.frameWithoutTransform = CGRect(center: origin, size: size)
@@ -544,14 +577,14 @@ final class LavaLampBlobFieldView: BaseView {
     }
 
     private func startAnimationsIfNeeded() {
-        guard window != nil, bounds.width > 0, bounds.height > 0, !hasStartedAnimations else { return }
+        guard window != nil, lavaContentView.bounds.width > 0, lavaContentView.bounds.height > 0, !hasStartedAnimations else { return }
         hasStartedAnimations = true
 
         for (blob, configuration) in zip(blobs, blobConfigurations) {
             animate(
                 blob,
                 orbitCenter: resolvedOrbitCenter(for: configuration),
-                orbitRadius: clippedContentView.bounds.width * configuration.orbitRadiusMultiplier,
+                orbitRadius: lavaContentView.bounds.width * configuration.orbitRadiusMultiplier,
                 startAngle: configuration.startAngle,
                 clockwise: configuration.clockwise,
                 scaleValues: configuration.scaleValues,
@@ -616,9 +649,25 @@ final class LavaLampBlobFieldView: BaseView {
 
     private func resolvedOrbitCenter(for configuration: BlobOrbitConfiguration) -> CGPoint {
         CGPoint(
-            x: clippedContentView.bounds.width * configuration.orbitCenter.x,
-            y: clippedContentView.bounds.height * configuration.orbitCenter.y
+            x: lavaContentView.bounds.width * configuration.orbitCenter.x,
+            y: lavaContentView.bounds.height * configuration.orbitCenter.y
         )
+    }
+
+    private func aspectFillFrame(in bounds: CGRect, aspectRatio: CGFloat) -> CGRect {
+        guard bounds.width > 0, bounds.height > 0, aspectRatio > 0 else {
+            return bounds
+        }
+
+        let boundsAspectRatio = bounds.width / bounds.height
+        let size: CGSize
+        if boundsAspectRatio > aspectRatio {
+            size = CGSize(width: bounds.width, height: bounds.width / aspectRatio)
+        } else {
+            size = CGSize(width: bounds.height * aspectRatio, height: bounds.height)
+        }
+
+        return CGRect(center: bounds.center, size: size)
     }
 
     private func updateDerivedColors() {
