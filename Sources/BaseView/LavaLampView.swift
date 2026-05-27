@@ -447,13 +447,13 @@ open class LavaLampBlobFieldView: BaseView {
             base.dynamicMixWithColor(highlight, amount: 0.2),
             saturationMultiplier: 0.96,
             brightnessMultiplier: 1.02,
-            alpha: 0.34
+            alpha: 0.2
         )
         innerShadowView.shadowColor = adjustedColor(
             base.dynamicMixWithColor(highlight, amount: 0.28),
             saturationMultiplier: 0.98,
             brightnessMultiplier: 1.04,
-            alpha: 0.7
+            alpha: 0.4
         )
 
         baseGradientView.colors = [
