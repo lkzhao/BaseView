@@ -60,11 +60,11 @@ open class VisualEffectCardView: BaseView {
         
         if #available(iOS 26.0, tvOS 26.0, *) {
             cornerConfiguration = UICornerConfiguration.uniformEdges(
-                topRadius: 40,
+                topRadius: 30,
                 bottomRadius: .containerConcentric(minimum: 30)
             )
         } else {
-            cornerRadius = 40
+            cornerRadius = 30
             cornerCurve = .continuous
         }
 
