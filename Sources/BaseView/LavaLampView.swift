@@ -63,7 +63,8 @@ open class LavaLampView: BaseView {
         fieldView.frameWithoutTransform = bounds
         glassView.frameWithoutTransform = bounds
         highlightView.frameWithoutTransform = bounds
-        let radius = bounds.height / 2
+        // A capsule lying down or standing up.
+        let radius = min(bounds.width, bounds.height) / 2
         glassView.cornerRadius = radius
         fieldView.cornerRadius = radius
         highlightView.cornerRadius = radius
@@ -283,7 +284,8 @@ open class LavaLampBlobFieldView: BaseView {
     open override func layoutSubviews() {
         super.layoutSubviews()
 
-        let radius = bounds.height / 2
+        // A capsule lying down or standing up.
+        let radius = min(bounds.width, bounds.height) / 2
         outerShadowView.frameWithoutTransform = bounds
         innerShadowView.frameWithoutTransform = outerShadowView.bounds
         clippedContentView.frameWithoutTransform = innerShadowView.bounds
@@ -296,10 +298,16 @@ open class LavaLampBlobFieldView: BaseView {
         outerShadowView.layer.shadowPath = shadowPath
         innerShadowView.layer.shadowPath = shadowPath
 
-        lavaContentView.frameWithoutTransform = aspectFillFrame(
-            in: clippedContentView.bounds,
-            aspectRatio: lavaContentAspectRatio
-        )
+        // The lava is laid out for a capsule lying down. Standing up, it stands up with it rather than showing a
+        // narrow slice of itself.
+        let contentBounds = clippedContentView.bounds
+        let isStanding = contentBounds.height > contentBounds.width
+        let lyingBounds = isStanding
+            ? CGRect(origin: .zero, size: CGSize(width: contentBounds.height, height: contentBounds.width))
+            : contentBounds
+        let lavaSize = aspectFillFrame(in: lyingBounds, aspectRatio: lavaContentAspectRatio).size
+        lavaContentView.transform = isStanding ? CGAffineTransform(rotationAngle: .pi / 2) : .identity
+        lavaContentView.frameWithoutTransform = CGRect(center: contentBounds.center, size: lavaSize)
         baseGradientView.frameWithoutTransform = lavaContentView.bounds
 
         if animationBoundsSize != lavaContentView.bounds.size {
