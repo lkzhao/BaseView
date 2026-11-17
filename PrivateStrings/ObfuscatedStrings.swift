@@ -31,7 +31,11 @@ enum ObfuscatedStringSource {
         static let restingBackgroundColor = "restingBackgroundColor"
         static let belowGlassWarpBackdrop = "belowGlassWarpBackdrop"
         static let lifted = "lifted"
+        static let liftedContentView = "liftedContentView"
+        static let warpsContentBelow = "warpsContentBelow"
         static let setLiftedAnimatedAlongsideCompletion = "setLifted:animated:alongside:completion:"
+        static let setLiftedAnimatedAlongsideAnimationsCompletion = "setLifted:animated:alongsideAnimations:completion:"
+        static let setLifted = "setLifted:"
     }
 
     enum PortalView {

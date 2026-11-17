@@ -31,10 +31,14 @@ enum BaseViewObfuscatedKeys {
         static let belowGlassWarpBackdrop = ObfuscatedString.decode("8sqigntsJgj71JGEdlMAAOP02q+Taw==", key: 0xEB)
         static let flexInteraction = ObfuscatedString.decode("OBH5w5OXbFIkFPfHu55+", key: 0xB9)
         static let lifted = ObfuscatedString.decode("clQ6D//d", key: 0x79)
+        static let liftedContentView = ObfuscatedString.decode("ZkAuE+PBh4xsVSUxCsvVvo0=", key: 0x65)
         static let liquidLensClass = ObfuscatedString.decode("Cybb/bmee0QoJ+/Hu7FvQDM=", key: 0xAF)
         static let restingBackgroundColor = ObfuscatedString.decode("SjIF4d29lVNRLAXq3qSfZ0wECenLsQ==", key: 0x93)
+        static let setLifted = ObfuscatedString.decode("B/bGnZlpWigIsQ==", key: 0xCF)
+        static let setLiftedAnimatedAlongsideAnimationsCompletion = ObfuscatedString.decode("c3pKERX9zrycLVc7Hf7TpZVrFCwA5MSum25CICXty6yBi3dSMgig2reaZlkxB/vevtU=", key: 0x5B)
         static let setLiftedAnimatedAlongsideCompletion = ObfuscatedString.decode("BfDAn5t3RCoKt82lg2RJMwPhnqKObk5YLRT43uCad1omGfHHu55+FQ==", key: 0xD1)
         static let style = ObfuscatedString.decode("eV0xC+M=", key: 0x65)
+        static let warpsContentBelow = ObfuscatedString.decode("NQDy782ek3VOPBbj9LCYfEU=", key: 0x9D)
     }
 
     enum PortalView {
